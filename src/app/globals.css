@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+  /*
+  Paleta Atendo
+  Azul royal #2060e0 · Navy #002060 · Sky #80a0e0 · Laranja #fd6c0f · Branco
+  */
+@layer components {
+  .brand-surface {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .brand-auth-surface {
+    @apply brand-surface relative flex items-center justify-center overflow-hidden p-4;
+  }
+
+  .brand-auth-surface::before {
+    content: '';
+    @apply pointer-events-none absolute -right-20 -top-20 size-72 rounded-full blur-3xl;
+    background-color: color-mix(in srgb, var(--brand-blue-sky) 35%, transparent);
+  }
+
+  .brand-auth-surface::after {
+    content: '';
+    @apply pointer-events-none absolute -bottom-16 -left-16 size-64 rounded-full blur-3xl;
+    background-color: color-mix(in srgb, var(--brand-orange) 12%, transparent);
+  }
+
+  .brand-header {
+    @apply w-full border-b shadow-sm;
+    background-color: var(--brand-white);
+    border-color: color-mix(in srgb, var(--brand-blue) 18%, white);
+    color: var(--foreground);
+  }
+
+  .brand-header-mobile {
+    @apply w-full border-b border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm;
+  }
+
+  .brand-header-inner {
+    @apply flex min-h-14 items-center justify-between gap-3 px-4;
+  }
+
+  .brand-content {
+    @apply mx-auto w-full max-w-5xl flex-1 px-4 py-6;
+  }
+
+  .brand-content-narrow {
+    @apply w-full max-w-md;
+  }
+
+  .brand-content-wide {
+    @apply w-full max-w-lg;
+  }
+
+  .brand-sidebar-user {
+    @apply truncate text-sm font-medium;
+    color: var(--sidebar-foreground);
+  }
+
+  .brand-sidebar {
+    @apply sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex;
+  }
+
+  .brand-nav-link {
+    @apply flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors;
+  }
+
+  .brand-nav-link-active {
+    @apply bg-primary font-medium text-primary-foreground shadow-sm;
+  }
+
+  .brand-nav-link-inactive {
+    @apply text-muted-foreground hover:bg-muted hover:text-foreground;
+  }
+
+  .brand-sidebar-nav-link {
+    @apply flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors;
+  }
+
+  .brand-sidebar-nav-link-active {
+    background-color: var(--brand-orange);
+    @apply font-medium text-white shadow-sm;
+  }
+
+  .brand-sidebar-nav-link-inactive {
+    @apply text-sidebar-muted hover:text-sidebar-foreground;
+  }
+
+  .brand-sidebar-nav-link-inactive:hover {
+    background-color: color-mix(in srgb, var(--brand-blue) 22%, var(--sidebar));
+  }
+
+  .brand-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-sidebar-border bg-sidebar pb-safe shadow-[0_-2px_12px_rgba(0,32,96,0.25)] md:hidden;
+  }
+
+  .brand-bottom-nav-link {
+    @apply flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-xl px-2.5 py-1.5 text-xs transition-colors;
+  }
+
+  .brand-bottom-nav-link-active {
+    background-color: var(--brand-orange);
+    @apply font-medium text-white shadow-sm;
+  }
+
+  .brand-bottom-nav-link-inactive {
+    @apply text-sidebar-muted;
+  }
+
+  .brand-bottom-nav-link-inactive:hover {
+    @apply text-sidebar-foreground;
+    background-color: color-mix(in srgb, var(--brand-blue) 22%, var(--sidebar));
+  }
+
+  .brand-page-title {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  .brand-page-description {
+    @apply text-muted-foreground mt-1 text-sm;
+  }
+
+  .brand-hero {
+    @apply relative overflow-hidden bg-gradient-to-b from-secondary via-background to-background;
+  }
+
+  .brand-section-muted {
+    @apply border-y;
+    background-color: color-mix(in oklch, var(--muted) 60%, transparent);
+  }
+
+  .brand-internal-badge {
+    @apply inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium text-white;
+    background-color: var(--brand-orange);
+  }
+}
+
+@layer base {
+  :root {
+    /* Cores da logomarca */
+    --brand-white: #ffffff;
+    --brand-blue: #2060e0;
+    --brand-blue-dark: #002060;
+    --brand-blue-sky: #80a0e0;
+    --brand-blue-light: #e8f2fb;
+    --brand-orange: #fd6c0f;
+
+    /* App — fundo branco, texto navy */
+    --background: var(--brand-white);
+    --foreground: var(--brand-blue-dark);
+    --card: var(--brand-white);
+    --card-foreground: var(--brand-blue-dark);
+    --popover: var(--brand-white);
+    --popover-foreground: var(--brand-blue-dark);
+    --primary: var(--brand-blue);
+    --primary-foreground: var(--brand-white);
+    --secondary: var(--brand-blue-light);
+    --secondary-foreground: var(--brand-blue-dark);
+    --muted: #f4f8fd;
+    --muted-foreground: #5a7cad;
+    --accent: var(--brand-blue-light);
+    --accent-foreground: var(--brand-blue-dark);
+    --destructive: var(--brand-blue-dark);
+    --destructive-foreground: var(--brand-white);
+    --success: var(--brand-blue);
+    --success-foreground: var(--brand-white);
+    --warning: var(--brand-orange);
+    --warning-foreground: var(--brand-white);
+    --info: var(--brand-blue-sky);
+    --info-foreground: var(--brand-blue-dark);
+    --border: #c8daf0;
+    --input: #c8daf0;
+    --ring: var(--brand-blue);
+    --radius: 0.75rem;
+
+    /* Sidebar — navy da logo; item ativo = laranja */
+    --sidebar: var(--brand-blue-dark);
+    --sidebar-foreground: var(--brand-white);
+    --sidebar-muted: var(--brand-blue-sky);
+    --sidebar-accent: #0a3a7a;
+    --sidebar-accent-foreground: var(--brand-white);
+    --sidebar-primary: var(--brand-orange);
+    --sidebar-primary-foreground: var(--brand-white);
+    --sidebar-border: #0040a8;
+  }
+
+  .dark {
+    --background: #001540;
+    --foreground: var(--brand-white);
+    --card: #002060;
+    --card-foreground: var(--brand-white);
+    --popover: #002060;
+    --popover-foreground: var(--brand-white);
+    --primary: var(--brand-blue);
+    --primary-foreground: var(--brand-white);
+    --secondary: #0a3a7a;
+    --secondary-foreground: var(--brand-white);
+    --muted: #0a3a7a;
+    --muted-foreground: var(--brand-blue-sky);
+    --accent: #0a3a7a;
+    --accent-foreground: var(--brand-white);
+    --destructive: var(--brand-orange);
+    --destructive-foreground: var(--brand-white);
+    --success: var(--brand-blue);
+    --success-foreground: var(--brand-white);
+    --warning: var(--brand-orange);
+    --warning-foreground: var(--brand-white);
+    --info: var(--brand-blue-sky);
+    --info-foreground: var(--brand-blue-dark);
+    --border: #0040a8;
+    --input: #0040a8;
+    --ring: var(--brand-blue-sky);
+    --sidebar: #001540;
+    --sidebar-foreground: var(--brand-white);
+    --sidebar-muted: var(--brand-blue-sky);
+    --sidebar-accent: #0a3a7a;
+    --sidebar-accent-foreground: var(--brand-white);
+    --sidebar-primary: var(--brand-orange);
+    --sidebar-primary-foreground: var(--brand-white);
+    --sidebar-border: #0040a8;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

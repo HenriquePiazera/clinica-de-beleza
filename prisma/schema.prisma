@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plan {
+  trial
+  solo
+  professional
+  team
+}
+
+enum PlanStatus {
+  active
+  past_due
+  canceled
+  trialing
+}
+
+enum AppointmentStatus {
+  scheduled
+  awaiting_confirmation
+  confirmed
+  completed
+  canceled
+}
+
+enum ConfirmationStatus {
+  pending
+  confirmed
+  expired
+}
+
+enum PaymentMethod {
+  cash
+  pix
+  credit_card
+  debit_card
+  transfer
+  other
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  canceled
+}
+
+enum TeamMemberRole {
+  member
+  admin
+}
+
+enum TeamMemberStatus {
+  invited
+  active
+  removed
+}
+
+enum FeedbackCategory {
+  bug
+  suggestion
+  praise
+  difficulty
+}
+
+enum FeedbackStatus {
+  new
+  reviewed
+  archived
+}
+
+enum CashFlowType {
+  receivable
+  expense
+}
+
+enum CashFlowStatus {
+  paid
+  pending
+  overdue
+}
+
+model User {
+  id                      String     @id @default(cuid())
+  name                    String
+  email                   String     @unique
+  password_hash           String
+  plan                    Plan       @default(trial)
+  plan_status             PlanStatus @default(trialing)
+  trial_ends_at           DateTime?
+  subscription_id         String?
+  storage_used_bytes      BigInt     @default(0)
+  encrypted_dek           String
+  dek_created_at          DateTime   @default(now())
+  onboarding_step         Int        @default(0)
+  onboarding_completed_at DateTime?
+  public_slug             String?    @unique
+  public_bio              String?
+  public_photo_url        String?
+  timezone                String     @default("America/Sao_Paulo")
+  reminder_hours_before     Int        @default(24)
+  confirmation_hours_before Int        @default(24)
+  receipt_tax_id            String?
+  receipt_street            String?
+  receipt_address_number    String?
+  receipt_complement        String?
+  receipt_neighborhood      String?
+  receipt_city              String?
+  receipt_state             String?
+  receipt_postal_code       String?
+  receipt_counter           Int        @default(0)
+  created_at                DateTime   @default(now())
+  updated_at              DateTime   @updatedAt
+
+  clients               Client[]
+  appointments          Appointment[]
+  service_records       ServiceRecord[]
+  attachments           Attachment[]
+  payments              Payment[]
+  audit_logs            AuditLog[]
+  password_reset_tokens PasswordResetToken[]
+  owned_teams           TeamMember[]         @relation("TeamOwner")
+  team_memberships      TeamMember[]         @relation("TeamMembership")
+  feedbacks             UserFeedback[]
+  services              Service[]
+  availabilities        Availability[]
+  cash_flow_entries     CashFlowEntry[]
+
+  @@map("users")
+}
+
+model UserFeedback {
+  id          String           @id @default(cuid())
+  user_id     String
+  nps_score   Int?
+  category    FeedbackCategory
+  message     String
+  can_contact Boolean          @default(true)
+  status      FeedbackStatus   @default(new)
+  created_at  DateTime         @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("user_feedbacks")
+}
+
+model Service {
+  id               String   @id @default(cuid())
+  user_id          String
+  name             String
+  description      String?
+  photo_url        String?
+  duration_minutes Int
+  price            Decimal? @db.Decimal(10, 2)
+  is_active        Boolean  @default(true)
+  sort_order       Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([user_id])
+  @@map("services")
+}
+
+model Availability {
+  id          String  @id @default(cuid())
+  user_id     String
+  day_of_week Int
+  start_time  String
+  end_time    String
+  is_active   Boolean @default(true)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, day_of_week])
+  @@map("availabilities")
+}
+
+model Client {
+  id                String    @id @default(cuid())
+  user_id           String
+  name              String
+  phone             String
+  email             String?
+  birth_date        DateTime?
+  notes             String?
+  push_subscription String?
+  pwa_installed_at  DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  service_records ServiceRecord[]
+  attachments     Attachment[]
+  payments        Payment[]
+
+  @@index([user_id])
+  @@map("clients")
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  client_id      String
+  user_id        String
+  service_id     String?
+  start_time     DateTime
+  end_time       DateTime
+  status         AppointmentStatus @default(scheduled)
+  notes          String?
+  buffer_minutes Int               @default(0)
+  reminder_sent_at DateTime?
+  confirmation_reminder_sent_at DateTime?
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+
+  user            User                      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client          Client                    @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  service         Service?                  @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  confirmations   AppointmentConfirmation[]
+  service_records ServiceRecord[]
+  payments        Payment[]
+
+  @@index([user_id])
+  @@index([user_id, start_time])
+  @@map("appointments")
+}
+
+model AppointmentConfirmation {
+  id             String             @id @default(cuid())
+  appointment_id String
+  token          String             @unique
+  status         ConfirmationStatus @default(pending)
+  sent_at        DateTime           @default(now())
+  confirmed_at   DateTime?
+
+  appointment Appointment @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+
+  @@map("appointment_confirmations")
+}
+
+model ServiceRecord {
+  id             String   @id @default(cuid())
+  appointment_id String
+  client_id      String
+  user_id        String
+  description    String
+  evolution      String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client      Client       @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  appointment Appointment  @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+
+  @@index([user_id])
+  @@map("service_records")
+}
+
+model Attachment {
+  id                String   @id @default(cuid())
+  client_id         String
+  service_record_id String?
+  user_id           String
+  file_url          String
+  file_name         String
+  file_type         String
+  file_size_bytes   BigInt
+  uploaded_at       DateTime @default(now())
+
+  user           User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client         Client         @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  service_record ServiceRecord? @relation(fields: [service_record_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@map("attachments")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  client_id      String
+  appointment_id String?
+  user_id        String
+  amount         Decimal       @db.Decimal(10, 2)
+  payment_method PaymentMethod
+  status         PaymentStatus @default(pending)
+  paid_at        DateTime?
+  receipt_number Int?
+  receipt_issued_at DateTime?
+  created_at     DateTime      @default(now())
+
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client      Client       @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@map("payments")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  user_id    String
+  operation  String
+  entity     String
+  entity_id  String
+  ip_address String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  user_id    String
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("password_reset_tokens")
+}
+
+model TeamMember {
+  id         String           @id @default(cuid())
+  owner_id   String
+  member_id  String
+  role       TeamMemberRole   @default(member)
+  status     TeamMemberStatus @default(invited)
+  invited_at DateTime         @default(now())
+  joined_at  DateTime?
+
+  owner  User @relation("TeamOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  member User @relation("TeamMembership", fields: [member_id], references: [id], onDelete: Cascade)
+
+  @@unique([owner_id, member_id])
+  @@map("team_members")
+}
+
+model CashFlowEntry {
+  id          String         @id @default(cuid())
+  user_id     String
+  type        CashFlowType
+  description String
+  category    String
+  amount      Decimal        @db.Decimal(10, 2)
+  entry_date  DateTime
+  status      CashFlowStatus @default(pending)
+  notes       String?
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, entry_date])
+  @@index([user_id, type])
+  @@map("cash_flow_entries")
+}
+
+/** Link de demonstração com janela de uso limitada (ex.: 2h a partir do 1º acesso). */
+model DemoAccessLink {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  label      String?
+  started_at DateTime?
+  expires_at DateTime?
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+
+  @@map("demo_access_links")
+}

@@ -1,0 +1,134 @@
+# REGRAS DO PROJETO — Demo Assistente Administrativo
+
+Você atua como Tech Lead deste repositório.
+
+Este arquivo é a **fonte da verdade para a IA** neste projeto.
+Não existe `MASTER_CONTEXT_V4.md`. Não consultar nem recriar regras de SaaS
+comerciais (assinatura, trial de 14 dias como produto, upgrade de plano na UI).
+
+---
+
+## O QUE É ESTE PROJETO
+
+- Nome do produto: **Demo Assistente Administrativo** (`src/lib/brand.ts`)
+- App web de **demonstração / portfólio** para clientes de freela
+- Público: clínicas, salões, estética e profissionais que agendam e atendem
+- **Não é SaaS com assinantes** — sem vender planos
+- Roda **local** com `npm run dev` (Postgres via `prisma dev`)
+- Deploy opcional na **Vercel** para testes com clientes: `docs/DEPLOY_VERCEL.md`
+  (Postgres Neon/Supabase na nuvem; não misturar com Server Ino)
+
+### Fluxo de negócio a preservar
+
+```
+Cliente → Agendamento → Atendimento → Histórico/evolução → Pagamento → Reagendamento
+```
+
+---
+
+## PROCESSO OBRIGATÓRIO ANTES DE GERAR CÓDIGO
+
+1. Diagnóstico
+2. Causa raiz
+3. Arquivos afetados
+4. Plano de correção
+5. Riscos
+
+Somente depois gerar código. Nunca pular direto para a solução.
+
+---
+
+## PRIORIDADE DE TRABALHO (demo)
+
+1. Fluxo ponta a ponta estável
+2. Marca Demo Assistente Administrativo neutra
+3. Modo demonstração (`DEMO_MODE`, link `/demo/<token>`)
+4. Landing sem venda de plano
+5. Seed / conta demo
+
+### Desenvolvimento local
+
+- `npm run dev` — prepara `.env`, Postgres local, schema, seed e Next
+- Login: `demo@assistente-admin.local` / `demo1234`
+- Anexos em pasta local `storage/` (não usar Supabase)
+- Não reintroduzir Vercel, Supabase, Sentry ou docs de deploy externos
+
+Não antecipar Mobile nativo, PWA avançado, Stripe, microsserviços sem pedido explícito.
+
+---
+
+## MODO DEMONSTRAÇÃO
+
+Arquivos: `src/lib/demo.ts`, `src/app/demo/[token]/route.ts`,
+`src/app/demo-expired/page.tsx`, `scripts/create-demo-link.mts`.
+
+| Variável | Papel |
+|----------|--------|
+| `DEMO_MODE=true` | Freio de tempo + banner |
+| `DEMO_SESSION_HOURS=2` | Janela após 1º acesso ao link |
+| `DEMO_BYPASS_EMAILS` | Contas que não expiram |
+| `BILLING_ENABLED=false` | Sem cobrança |
+| `BETA_ALLOWED_EMAILS` | Cadastro fechado (opcional) |
+
+---
+
+## PILARES NÃO NEGOCIÁVEIS
+
+**Isolamento:** query com `id` + `userId`. Nunca `findUnique` só por `id`.
+
+**Criptografia:** `encryptField`/`decryptField` com `userId` (`src/lib/crypto.ts`).
+
+**Auditoria:** `logAudit()` em writes (`src/lib/audit.ts`).
+
+**Limites:** `checkPlanLimit()` permanece no código (billing off libera).
+
+**Erros:** `ERROR_CODES` em português; sem stack/SQL/Prisma ao usuário.
+
+**Mobile first:** 375px, botões ≥ 44px.
+
+**Validação:** Zod front e back.
+
+**Marca:** só `src/lib/brand.ts` e assets do Demo Assistente Administrativo.
+
+---
+
+## STACK
+
+Next.js 14 App Router · React · TypeScript · Tailwind · shadcn/ui ·
+Server Actions · PostgreSQL local (Prisma + `prisma dev`) · Auth.js ·
+arquivos em `storage/` local.
+
+Monólito modular. Sem microsserviços / multi-banco / plataformas de cloud.
+
+Estrutura: `src/app`, `components`, `features`, `services`, `schemas`, `lib`.
+
+---
+
+## PROIBIÇÕES
+
+- Nunca reescrever arquivos inteiros sem necessidade
+- Nunca duplicar código
+- Nunca alterar arquitetura/auth sem autorização
+- Nunca remover crypto, audit ou `checkPlanLimit`
+- Nunca adicionar Stripe / planos pagos
+- Nunca reintroduzir Vercel, Supabase, Sentry ou configs de deploy cloud
+- Nunca expor marca de outro produto na UI
+- Nunca usar o nome "Atendo" neste projeto
+
+---
+
+## DEFINITION OF DONE
+
+- [ ] Fluxo cliente → agenda → histórico → pagamento → reagendar
+- [ ] Isolamento + Zod + ERROR_CODES
+- [ ] Crypto + audit em writes
+- [ ] UI 375px / botões ≥ 44px
+- [ ] Sem marca/copy de outro produto
+- [ ] `npm run dev` sobe localmente
+
+---
+
+## REGRA DE OURO
+
+A menor alteração possível é a melhor alteração.
+Preservar o funcionamento existente é mais importante do que aplicar novos padrões.
