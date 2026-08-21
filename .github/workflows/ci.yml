@@ -31,6 +31,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          NEXT_IGNORE_INCORRECT_LOCKFILE: '1'
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           AUTH_SECRET: ci-build-secret-minimum-32-characters-long
           NEXTAUTH_SECRET: ci-build-secret-minimum-32-characters-long
