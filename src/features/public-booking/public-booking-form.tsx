@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +14,7 @@ import type { PublicProfessionalDTO } from '@/features/public-booking/actions'
 import { PublicServicePicker } from '@/features/public-booking/public-service-picker'
 import { PushNotificationPrompt } from '@/components/pwa/push-notification-prompt'
 import { subscribeClientToPush } from '@/lib/push-client'
+import { formatDisplayDate } from '@/lib/datetime'
 
 type Props = {
   professional: PublicProfessionalDTO
@@ -20,7 +22,7 @@ type Props = {
 }
 
 export function PublicBookingForm({ professional, selectedSlug }: Props) {
-  const [serviceId, setServiceId] = useState(professional.services[0]?.id ?? '')
+  const [serviceId, setServiceId] = useState('')
   const [date, setDate] = useState('')
   const [dates, setDates] = useState<string[]>([])
   const [slots, setSlots] = useState<{ start: string; end: string }[]>([])
@@ -32,6 +34,9 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
   const [confirmUrl, setConfirmUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const detailsRef = useRef<HTMLDivElement>(null)
+
+  const selectedService = professional.services.find((s) => s.id === serviceId)
 
   useEffect(() => {
     if (!serviceId) return
@@ -60,6 +65,16 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
     })
   }, [serviceId, date, selectedSlug])
 
+  useEffect(() => {
+    if (!serviceId || !detailsRef.current) return
+    detailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [serviceId])
+
+  function handleSelectService(id: string) {
+    setServiceId(id)
+    setError(null)
+  }
+
   function formatSlotLabel(iso: string) {
     return new Date(iso).toLocaleTimeString('pt-BR', {
       hour: '2-digit',
@@ -72,6 +87,11 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
     setError(null)
     setMessage(null)
     setConfirmUrl(null)
+
+    if (!serviceId) {
+      setError('Selecione um serviço.')
+      return
+    }
 
     if (!selectedSlot) {
       setError('Selecione um horário.')
@@ -95,14 +115,15 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
 
       setConfirmUrl(result.confirmUrl)
       const submittedPhone = phone.trim()
+      const submittedEmail = email.trim()
 
-      if (result.notificationChannel === 'push') {
-        setMessage(
-          'Agendamento solicitado! Enviamos a confirmação por notificação no celular.'
-        )
-      } else if (result.notificationChannel === 'email') {
+      if (result.notificationChannel === 'email') {
         setMessage(
           'Agendamento solicitado! Verifique seu e-mail para confirmar.'
+        )
+      } else if (result.notificationChannel === 'push') {
+        setMessage(
+          'Agendamento solicitado! Enviamos a confirmação por notificação no celular.'
         )
       } else {
         const pushOk = await subscribeClientToPush({
@@ -114,9 +135,13 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
           setMessage(
             'Agendamento solicitado! Confirmação enviada por notificação no celular.'
           )
+        } else if (submittedEmail) {
+          setMessage(
+            'Agendamento solicitado! O e-mail de confirmação não pôde ser enviado agora — use o link abaixo.'
+          )
         } else {
           setMessage(
-            'Agendamento solicitado! Confirme pelo link abaixo ou pelo e-mail, se cadastrou.'
+            'Agendamento solicitado! Confirme pelo link abaixo (informe e-mail na próxima vez para receber confirmação).'
           )
         }
       }
@@ -153,106 +178,158 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       <PublicServicePicker
         services={professional.services}
         selectedId={serviceId}
-        onSelect={setServiceId}
+        onSelect={handleSelectService}
       />
 
-      <div className="space-y-2">
-        <Label htmlFor="date">Data</Label>
-        <select
-          id="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm"
-        >
-          {dates.length === 0 ? (
-            <option value="">Sem datas disponíveis</option>
-          ) : (
-            dates.map((d) => (
-              <option key={d} value={d}>
-                {new Date(`${d}T12:00:00`).toLocaleDateString('pt-BR', {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                })}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Horário</Label>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {slots.map((slot) => (
-            <button
-              key={slot.start}
-              type="button"
-              onClick={() => setSelectedSlot(slot.start)}
-              className={`min-h-11 rounded-md border px-2 text-sm ${
-                selectedSlot === slot.start
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-input bg-background hover:bg-muted'
-              }`}
-            >
-              {formatSlotLabel(slot.start)}
-            </button>
-          ))}
-        </div>
-        {date && slots.length === 0 ? (
-          <p className="text-muted-foreground text-xs">Nenhum horário nesta data.</p>
-        ) : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="name">Seu nome *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          className="min-h-11"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="phone">Telefone *</Label>
-        <Input
-          id="phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-          className="min-h-11"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="min-h-11"
-        />
-        <p className="text-muted-foreground text-xs">
-          E-mail ou notificações push — usamos o que estiver disponível (grátis).
+      {!selectedService ? (
+        <p className="text-muted-foreground text-sm">
+          Selecione um serviço acima para preencher data, horário e seus dados.
         </p>
-      </div>
+      ) : (
+        <div
+          ref={detailsRef}
+          id="booking-details"
+          className="scroll-mt-6 space-y-4"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground -ml-2 min-h-11 gap-1.5 px-2"
+            onClick={() => {
+              setServiceId('')
+              setDate('')
+              setDates([])
+              setSlots([])
+              setSelectedSlot('')
+              setError(null)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+          >
+            <ArrowLeft className="size-5 shrink-0" />
+            <span className="text-sm font-medium">Voltar aos serviços</span>
+          </Button>
 
-      <PushNotificationPrompt slug={selectedSlug} clientPhone={phone} />
+          <div
+            className="border-primary bg-primary/5 ring-primary/20 rounded-lg border-2 p-3 ring-2"
+            aria-live="polite"
+          >
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              Serviço selecionado
+            </p>
+            <p className="text-foreground mt-1 text-base font-semibold leading-tight">
+              {selectedService.name}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {selectedService.duration_minutes} min
+              {selectedService.price != null
+                ? ` · ${selectedService.price.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  })}`
+                : ''}
+            </p>
+          </div>
 
-      {error ? <p className="text-destructive text-sm">{error}</p> : null}
-      {message ? <p className="text-primary text-sm">{message}</p> : null}
-      {confirmUrl ? (
-        <div className="bg-muted space-y-2 rounded-md p-3 text-sm">
-          <p className="font-medium">Link de confirmação</p>
-          <a href={confirmUrl} className="text-primary break-all hover:underline">
-            {confirmUrl}
-          </a>
+          <div className="space-y-2">
+            <Label htmlFor="date">Data</Label>
+            <select
+              id="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm"
+            >
+              {dates.length === 0 ? (
+                <option value="">Sem datas disponíveis</option>
+              ) : (
+                dates.map((d) => (
+                  <option key={d} value={d}>
+                    {formatDisplayDate(d)}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Horário</Label>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {slots.map((slot) => (
+                <button
+                  key={slot.start}
+                  type="button"
+                  onClick={() => setSelectedSlot(slot.start)}
+                  className={`min-h-11 rounded-md border px-2 text-sm ${
+                    selectedSlot === slot.start
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-input bg-background hover:bg-muted'
+                  }`}
+                >
+                  {formatSlotLabel(slot.start)}
+                </button>
+              ))}
+            </div>
+            {date && slots.length === 0 ? (
+              <p className="text-muted-foreground text-xs">
+                Nenhum horário nesta data.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Seu nome *</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="min-h-11"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone *</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              className="min-h-11"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="min-h-11"
+            />
+            <p className="text-muted-foreground text-xs">
+              Informe o e-mail para receber a confirmação do agendamento.
+            </p>
+          </div>
+
+          <PushNotificationPrompt slug={selectedSlug} clientPhone={phone} />
+
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
+          {message ? <p className="text-primary text-sm">{message}</p> : null}
+          {confirmUrl ? (
+            <div className="bg-muted space-y-2 rounded-md p-3 text-sm">
+              <p className="font-medium">Link de confirmação</p>
+              <a
+                href={confirmUrl}
+                className="text-primary break-all hover:underline"
+              >
+                {confirmUrl}
+              </a>
+            </div>
+          ) : null}
+
+          <Button type="submit" className="min-h-11 w-full" disabled={isPending}>
+            {isPending ? 'Agendando...' : 'Solicitar agendamento'}
+          </Button>
         </div>
-      ) : null}
-
-      <Button type="submit" className="min-h-11 w-full" disabled={isPending}>
-        {isPending ? 'Agendando...' : 'Solicitar agendamento'}
-      </Button>
+      )}
     </form>
   )
 }

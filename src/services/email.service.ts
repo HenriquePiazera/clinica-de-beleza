@@ -49,7 +49,9 @@ async function sendResendEmail({
 
   if (!response.ok) {
     const body = await response.text()
-    return { sent: false, error: body || response.statusText }
+    const error = body || response.statusText
+    console.error('[resend] falha ao enviar:', response.status, error)
+    return { sent: false, error }
   }
 
   return { sent: true }
@@ -88,9 +90,8 @@ export async function sendFeedbackNotificationEmail(
 
 function formatAppointmentDateTime(date: Date): string {
   return date.toLocaleString('pt-BR', {
-    weekday: 'long',
     day: '2-digit',
-    month: 'long',
+    month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',

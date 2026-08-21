@@ -4,46 +4,54 @@ import { prisma } from '../src/lib/prisma.ts'
 import { generateEncryptedDek } from '../src/lib/crypto.ts'
 import { generatePublicSlug } from '../src/lib/slug.ts'
 
-const DEMO_EMAIL = 'demo@assistente-admin.local'
-const DEMO_PASSWORD = 'demo1234'
-const DEMO_NAME = 'Clínica Demo Assistente Administrativo'
-const OLD_EMAIL = 'demo@atendo.local'
+const OWNER_EMAIL = 'mariana@clinica-mariana.local'
+const OWNER_PASSWORD = 'beleza1234'
+const OWNER_NAME = 'Mariana Oliveira'
+const LEGACY_EMAILS = [
+  'demo@assistente-admin.local',
+  'demo@atendo.local',
+]
 
 async function main() {
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12)
+  const passwordHash = await bcrypt.hash(OWNER_PASSWORD, 12)
 
-  const old = await prisma.user.findFirst({ where: { email: OLD_EMAIL } })
-  if (old) {
+  for (const oldEmail of LEGACY_EMAILS) {
+    const old = await prisma.user.findFirst({ where: { email: oldEmail } })
+    if (!old) continue
     await prisma.user.update({
       where: { id: old.id },
       data: {
-        email: DEMO_EMAIL,
-        name: DEMO_NAME,
+        email: OWNER_EMAIL,
+        name: OWNER_NAME,
         password_hash: passwordHash,
+        public_bio: 'Esteticista',
+        plan: 'team',
+        plan_status: 'active',
         onboarding_completed_at: old.onboarding_completed_at ?? new Date(),
         onboarding_step: 99,
       },
     })
-    console.log(`Atualizado ${OLD_EMAIL} → ${DEMO_EMAIL}`)
+    console.log(`Atualizado ${oldEmail} → ${OWNER_EMAIL}`)
   }
 
-  let user = await prisma.user.findFirst({ where: { email: DEMO_EMAIL } })
+  let user = await prisma.user.findFirst({ where: { email: OWNER_EMAIL } })
   if (!user) {
     user = await prisma.user.create({
       data: {
-        name: DEMO_NAME,
-        email: DEMO_EMAIL,
+        name: OWNER_NAME,
+        email: OWNER_EMAIL,
         password_hash: passwordHash,
         encrypted_dek: generateEncryptedDek(),
-        public_slug: generatePublicSlug(DEMO_NAME),
-        plan: 'professional',
+        public_slug: generatePublicSlug(OWNER_NAME),
+        public_bio: 'Esteticista',
+        plan: 'team',
         plan_status: 'active',
         onboarding_step: 99,
         onboarding_completed_at: new Date(),
         timezone: 'America/Sao_Paulo',
       },
     })
-    console.log(`Criado ${DEMO_EMAIL}`)
+    console.log(`Criado ${OWNER_EMAIL}`)
   } else {
     await prisma.user.update({
       where: { id: user.id },
@@ -53,14 +61,14 @@ async function main() {
         onboarding_step: 99,
       },
     })
-    console.log(`Senha resetada para ${DEMO_EMAIL}`)
+    console.log(`Senha resetada para ${OWNER_EMAIL}`)
   }
 
   const users = await prisma.user.findMany({
     select: { email: true, name: true },
   })
   console.log('Usuários:', users)
-  console.log(`Login: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`)
+  console.log(`Login: ${OWNER_EMAIL} / ${OWNER_PASSWORD}`)
 }
 
 main()

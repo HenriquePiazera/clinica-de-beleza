@@ -4,6 +4,29 @@ export function formatLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
+/** Exibição dia/mês/ano (ex.: 21/08/2026). */
+export function formatDisplayDate(date: Date | string): string {
+  const value =
+    typeof date === 'string' ? new Date(date.includes('T') ? date : `${date}T12:00:00`) : date
+  return value.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+/** Exibição dia/mês/ano + horário (ex.: 21/08/2026, 14:30). */
+export function formatDisplayDateTime(date: Date | string): string {
+  const value = typeof date === 'string' ? new Date(date) : date
+  return value.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 /** Converte YYYY-MM-DD para Date ao meio-dia local (evita mudança de dia por UTC). */
 export function parseLocalDateKey(dateKey: string): Date {
   const [year, month, day] = dateKey.split('-').map(Number)

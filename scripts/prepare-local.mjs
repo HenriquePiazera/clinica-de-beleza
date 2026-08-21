@@ -17,7 +17,7 @@ const root = resolve(__dirname, '..')
 const envPath = resolve(root, '.env')
 const examplePath = resolve(root, '.env.example')
 
-export const LOCAL_DB_NAME = 'demo-assistente-administrativo'
+export const LOCAL_DB_NAME = 'clinica-de-beleza'
 
 /** Fallback se ainda não soubermos a porta do `prisma dev`. */
 export const LOCAL_DATABASE_URL_FALLBACK =
@@ -25,8 +25,8 @@ export const LOCAL_DATABASE_URL_FALLBACK =
   '?sslmode=disable&connection_limit=10&connect_timeout=0' +
   '&max_idle_connection_lifetime=0&pool_timeout=0&socket_timeout=0'
 
-const DEMO_EMAIL = 'demo@assistente-admin.local'
-const DEMO_PASSWORD = 'demo1234'
+const OWNER_EMAIL = 'mariana@clinica-mariana.local'
+const OWNER_PASSWORD = 'beleza1234'
 
 function withPoolParams(url) {
   if (!url) return url
@@ -99,7 +99,7 @@ function serializeEnv(map) {
   ]
 
   const lines = [
-    '# Gerado por scripts/prepare-local.mjs — Demo Assistente Administrativo',
+    '# Gerado por scripts/prepare-local.mjs — Clínica de Beleza Mariana Oliveira',
     '',
   ]
 
@@ -175,11 +175,13 @@ export function ensureLocalEnv() {
   map.BILLING_ENABLED = map.BILLING_ENABLED || 'false'
   map.DEMO_MODE = map.DEMO_MODE || 'false'
   map.DEMO_SESSION_HOURS = map.DEMO_SESSION_HOURS || '2'
-  map.DEMO_BYPASS_EMAILS = map.DEMO_BYPASS_EMAILS || DEMO_EMAIL
-  map.PLATFORM_OWNER_EMAILS = map.PLATFORM_OWNER_EMAILS || DEMO_EMAIL
-  map.BETA_ALLOWED_EMAILS = map.BETA_ALLOWED_EMAILS || DEMO_EMAIL
+  map.DEMO_BYPASS_EMAILS = map.DEMO_BYPASS_EMAILS || OWNER_EMAIL
+  map.PLATFORM_OWNER_EMAILS = map.PLATFORM_OWNER_EMAILS || OWNER_EMAIL
+  map.BETA_ALLOWED_EMAILS =
+    map.BETA_ALLOWED_EMAILS ||
+    `${OWNER_EMAIL},camila@clinica-mariana.local,juliana@clinica-mariana.local`
   map.RESEND_FROM_EMAIL = map.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-  map.VAPID_SUBJECT = map.VAPID_SUBJECT || `mailto:${DEMO_EMAIL}`
+  map.VAPID_SUBJECT = map.VAPID_SUBJECT || `mailto:${OWNER_EMAIL}`
 
   if (!map.VAPID_PUBLIC_KEY || !map.VAPID_PRIVATE_KEY) {
     const vapid = webpush.generateVAPIDKeys()
@@ -214,7 +216,7 @@ function waitForUrl(url, timeoutMs = 90_000) {
           reject(
             new Error(
               `Timeout esperando Postgres local em ${host}:${port}. ` +
-                `Rode: npx prisma dev --name ${LOCAL_DB_NAME} --detach`
+                `Rode: npx prisma dev --name ${LOCAL_DB_NAME}`
             )
           )
           return
@@ -224,6 +226,55 @@ function waitForUrl(url, timeoutMs = 90_000) {
     }
     tryOnce()
   })
+}
+
+async function canQueryPostgres(url) {
+  const { default: pg } = await import('pg')
+  const client = new pg.Client({ connectionString: url })
+  try {
+    await client.connect()
+    await client.query('SELECT 1')
+    return true
+  } catch {
+    return false
+  } finally {
+    try {
+      await client.end()
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function isClinicDbRunning() {
+  try {
+    const ls = execSync('npx prisma dev ls', {
+      cwd: root,
+      encoding: 'utf8',
+      env: process.env,
+    })
+    const block = ls.split(/\r?\n/).find((line) => line.includes(LOCAL_DB_NAME))
+    return Boolean(block && /running/i.test(block))
+  } catch {
+    return false
+  }
+}
+
+function startPrismaDevPersistent() {
+  // `--detach` no Windows às vezes sobe e morre; spawn detached mantém o processo.
+  const child = spawn(
+    'npx',
+    ['prisma', 'dev', '--name', LOCAL_DB_NAME],
+    {
+      cwd: root,
+      detached: true,
+      stdio: 'ignore',
+      shell: true,
+      windowsHide: true,
+      env: process.env,
+    }
+  )
+  child.unref()
 }
 
 function readLocalDbUrlFromLs() {
@@ -252,32 +303,49 @@ export async function ensureLocalPostgres() {
 
   let dbUrl = extractPostgresUrl(map.DATABASE_URL) || readLocalDbUrlFromLs()
 
-  if (dbUrl) {
+  if (dbUrl && isClinicDbRunning() && (await canQueryPostgres(dbUrl))) {
+    console.log(`→ Postgres local já ativo.`)
+    persistDatabaseUrl(dbUrl)
+    return { useLocalDb: true }
+  }
+
+  if (isClinicDbRunning()) {
     try {
-      await waitForUrl(dbUrl, 1500)
-      console.log(`→ Postgres local já ativo.`)
-      persistDatabaseUrl(dbUrl)
-      return { useLocalDb: true }
+      execSync(`npx prisma dev stop ${LOCAL_DB_NAME}`, {
+        cwd: root,
+        stdio: 'ignore',
+        env: process.env,
+      })
     } catch {
-      // sobe de novo
+      // ignore
     }
   }
 
   console.log(`→ Subindo Postgres local (prisma dev — ${LOCAL_DB_NAME})...`)
-  const output = execSync(`npx prisma dev --detach --name ${LOCAL_DB_NAME}`, {
-    cwd: root,
-    encoding: 'utf8',
-    env: process.env,
-  })
-  dbUrl =
-    extractPostgresUrl(output) ||
-    readLocalDbUrlFromLs() ||
-    LOCAL_DATABASE_URL_FALLBACK
+  startPrismaDevPersistent()
 
-  persistDatabaseUrl(dbUrl)
-  console.log(`→ DATABASE_URL local: ${dbUrl.split('?')[0]}`)
-  await waitForUrl(dbUrl, 90_000)
-  return { useLocalDb: true }
+  const started = Date.now()
+  while (Date.now() - started < 90_000) {
+    dbUrl = readLocalDbUrlFromLs() || extractPostgresUrl(map.DATABASE_URL)
+    if (dbUrl) {
+      try {
+        await waitForUrl(dbUrl, 2_000)
+        if (await canQueryPostgres(dbUrl)) {
+          persistDatabaseUrl(dbUrl)
+          console.log(`→ DATABASE_URL local: ${dbUrl.split('?')[0]}`)
+          return { useLocalDb: true }
+        }
+      } catch {
+        // keep waiting
+      }
+    }
+    await new Promise((r) => setTimeout(r, 1_000))
+  }
+
+  throw new Error(
+    `Não foi possível subir o Postgres local (${LOCAL_DB_NAME}). ` +
+      `Tente em outro terminal: npx prisma dev --name ${LOCAL_DB_NAME}`
+  )
 }
 
 export function syncSchemaAndSeed(useLocalDb = true) {
@@ -292,7 +360,7 @@ export function syncSchemaAndSeed(useLocalDb = true) {
     stdio: 'inherit',
     env: process.env,
   })
-  console.log('→ seed demo...')
+  console.log('→ seed clínica...')
   execSync('npx tsx scripts/seed-demo.mts', {
     cwd: root,
     stdio: 'inherit',
@@ -301,12 +369,12 @@ export function syncSchemaAndSeed(useLocalDb = true) {
 }
 
 export async function prepareLocal() {
-  console.log('\n=== Demo Assistente Administrativo — preparação local ===\n')
+  console.log('\n=== Clínica de Beleza Mariana Oliveira — preparação local ===\n')
   const { useLocalDb } = await ensureLocalPostgres()
   syncSchemaAndSeed(useLocalDb)
   console.log('\nPronto para desenvolver.')
-  console.log(`Login: ${DEMO_EMAIL}`)
-  console.log(`Senha: ${DEMO_PASSWORD}`)
+  console.log(`Login: ${OWNER_EMAIL}`)
+  console.log(`Senha: ${OWNER_PASSWORD}`)
   console.log('URL:   http://localhost:3000\n')
 }
 

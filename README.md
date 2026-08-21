@@ -1,6 +1,6 @@
-# Demo Assistente Administrativo
+# Clínica de Beleza Mariana Oliveira
 
-Sistema de agenda e atendimento para clínicas, salões e profissionais.
+Sistema de agenda e atendimento da clínica (estética, beleza e bem-estar).
 
 ## Começar
 
@@ -10,14 +10,15 @@ npm run dev
 ```
 
 Isso sobe Postgres local (`prisma dev`), aplica schema, cria seed e abre
-http://localhost:3000 — sem serviços externos de deploy.
+http://localhost:3000.
 
-### Login
+### Login (seed)
 
-| Campo | Valor |
-|-------|--------|
-| E-mail | `demo@assistente-admin.local` |
-| Senha | `demo1234` |
+| Quem | E-mail | Senha |
+|------|--------|-------|
+| Mariana (dona) | `mariana@clinica-mariana.local` | `beleza1234` |
+| Camila | `camila@clinica-mariana.local` | `beleza1234` |
+| Juliana | `juliana@clinica-mariana.local` | `beleza1234` |
 
 ## Scripts
 
@@ -26,25 +27,43 @@ http://localhost:3000 — sem serviços externos de deploy.
 | `npm run dev` | Prepara tudo + Next.js |
 | `npm run setup` | Só prepara (env, banco local, seed) |
 | `npm run dev:next` | Só Next (banco já rodando) |
-| `npm run db:seed` | Seed da conta demo |
-| `npm run demo:link` | Link de 2h (se `DEMO_MODE=true`) |
+| `npm run lint` | ESLint (Next) |
+| `npm run test` | Testes unitários (Vitest) |
+| `npm run test:watch` | Vitest em modo watch |
+| `npm run test:e2e` | E2E Playwright (login, cliente, agenda) |
+| `npm run test:e2e:ui` | Playwright com UI |
+| `npm run db:seed` | Seed da clínica (equipe, serviços, horários) |
+| `npm run setup:notifications` | Gera chaves VAPID (Web Push) |
+| `npm run test:crypto` | Smoke de crypto com banco (opcional) |
+| `npm run deploy:secrets` | Gera segredos para colar na Vercel |
 
-## Acessar pelo celular / outro PC (mesmo Wi‑Fi)
+## Testes automatizados
 
-1. No computador, rode `npm run dev`
-2. Descubra o IP local:
-   - PowerShell: `ipconfig` → procure **IPv4** (ex.: `10.0.0.105`)
-3. No celular/outro aparelho, abra: `http://10.0.0.105:3000` (use o seu IP)
-4. Se o login falhar pelo IP, no `.env` temporariamente:
-   ```
-   NEXTAUTH_URL="http://10.0.0.105:3000"
-   ```
-   Reinicie o `npm run dev`.
+```bash
+npm test          # unitários (Vitest)
+npm run test:e2e  # ponta a ponta (Playwright)
+```
 
-PC e celular precisam estar na **mesma rede Wi‑Fi**. Firewall do Windows pode pedir permissão na primeira vez — permita.
+**Unitários:** erros/`actionError`, marca, limites, schemas Zod, crypto.
 
-## Deploy na Vercel (link público para clientes)
+**E2E (pré-requisito):** Postgres local ativo + seed (`npm run setup` ou `npm run dev`).  
+Conta: `mariana@clinica-mariana.local` / `beleza1234`.  
+Se o banco `prisma dev` estiver parado: `npx prisma dev --name clinica-de-beleza` e depois `npm run db:seed`.
 
-Passo a passo completo: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
+Cobertura E2E: login (ok/erro), cadastro de cliente, novo agendamento, Configurações (serviços/horários/equipe).
 
-Resumo: banco Postgres na nuvem (Neon gratuito) → `prisma db push` + seed → importar o repo na Vercel → variáveis de ambiente → gerar link com `npm run demo:link`.
+## Deploy (cliente testar)
+
+1. Checklist: [docs/CHECKLIST_DEPLOY_CLIENTE.md](docs/CHECKLIST_DEPLOY_CLIENTE.md)
+2. Detalhes: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
+3. Env modelo: `.env.production.example`
+4. Segredos: `npm run deploy:secrets`
+
+Entrega / escopo: [docs/ENTREGA_CLIENTE.md](docs/ENTREGA_CLIENTE.md)
+
+## Acessar pelo celular (mesmo Wi‑Fi)
+
+1. `npm run dev`
+2. IP local: `ipconfig` → IPv4
+3. No celular: `http://SEU-IP:3000`
+4. Se o login falhar, ajuste `NEXTAUTH_URL` no `.env` e reinicie

@@ -151,6 +151,7 @@ export async function createPublicBooking(input: {
       confirmUrl: string
       emailSent: boolean
       notificationChannel: 'push' | 'email' | 'none'
+      notificationError?: string
     }
   | { success: false; error: string }
 > {
@@ -236,7 +237,7 @@ export async function createPublicBooking(input: {
         email,
       },
     })
-  } else if (email && !client.email) {
+  } else if (email && client.email !== email) {
     client = await prisma.client.update({
       where: { id: client.id },
       data: { email, name: parsed.data.client_name.trim() },
@@ -300,6 +301,7 @@ export async function createPublicBooking(input: {
     confirmUrl,
     emailSent: notification.channel === 'email',
     notificationChannel: notification.channel,
+    notificationError: notification.error,
   }
 }
 
@@ -340,9 +342,20 @@ export async function confirmAppointmentByToken(
     }),
   ])
 
+  const professionalName =
+    confirmation.appointment.user?.name ??
+    (
+      await prisma.user.findFirst({
+        where: { id: confirmation.appointment.user_id },
+        select: { name: true },
+      })
+    )?.name
+
   return {
     success: true,
-    message: `Agendamento confirmado com ${confirmation.appointment.user.name}.`,
+    message: professionalName
+      ? `Agendamento confirmado com ${professionalName}.`
+      : 'Agendamento confirmado com sucesso.',
   }
 }
 
@@ -395,7 +408,7 @@ export async function savePushSubscription(input: {
           id: appointment.id,
           start_time: appointment.start_time,
           end_time: appointment.end_time,
-          professionalName: appointment.user.name,
+          professionalName: appointment.user?.name ?? professional.name,
           serviceName: appointment.service?.name ?? 'Atendimento',
         },
         client: {

@@ -1,5 +1,5 @@
 {
-  "name": "demo-assistente-administrativo",
+  "name": "clinica-de-beleza",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -13,13 +13,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx scripts/seed-demo.mts",
     "setup:notifications": "node scripts/setup-notifications.mjs",
+    "configure:resend": "node scripts/configure-resend.mjs",
+    "test:notifications": "node scripts/test-notifications.mjs",
     "test:crypto": "npx tsx scripts/test-crypto.mts",
-    "demo:link": "npx tsx scripts/create-demo-link.mts"
+    "demo:link": "npx tsx scripts/create-demo-link.mts",
+    "deploy:secrets": "node scripts/print-deploy-secrets.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -47,6 +54,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
@@ -58,7 +66,8 @@
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "@emnapi/core": "1.11.3",

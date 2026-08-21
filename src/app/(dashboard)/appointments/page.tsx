@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PageHeader } from '@/components/layout/page-header'
+import { formatDisplayDateTime } from '@/lib/datetime'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CopyReminderButton } from '@/features/appointments/copy-reminder-button'
@@ -39,7 +40,7 @@ export default async function AppointmentsPage() {
                       <div>
                         <p className="font-medium">{appt.client_name}</p>
                         <p className="text-muted-foreground text-sm">
-                          {new Date(appt.start_time).toLocaleString('pt-BR')} —{' '}
+                          {formatDisplayDateTime(appt.start_time)} —{' '}
                           {new Date(appt.end_time).toLocaleTimeString('pt-BR', {
                             hour: '2-digit',
                             minute: '2-digit',

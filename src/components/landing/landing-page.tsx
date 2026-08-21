@@ -1,306 +1,271 @@
 import Link from 'next/link'
-import {
-  Calendar,
-  Users,
-  FileText,
-  Wallet,
-  FolderOpen,
-  Smartphone,
-  Monitor,
-  CheckCircle2,
-  ArrowRight,
-  type LucideIcon,
-} from 'lucide-react'
+import { ArrowRight, AtSign, MapPin, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Logo } from '@/components/layout/logo'
-import { ShellHeader } from '@/components/layout/shell-header'
-import { cn } from '@/lib/utils'
-import { APP_NAME, APP_TAGLINE, APP_SLOGAN, BRAND } from '@/lib/brand'
+import {
+  APP_NAME,
+  APP_TAGLINE,
+  APP_PRESENTATION,
+  APP_LOGO_PATH,
+  APP_DIFFERENTIALS,
+  APP_CONTACT,
+} from '@/lib/brand'
+import type { LandingClinicData } from '@/features/landing/get-landing-data'
 
-type FeatureItem = {
-  title: string
-  description: string
-  icon?: LucideIcon
-  icons?: LucideIcon[]
+function formatPrice(price: number | null) {
+  if (price == null) return null
+  return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-const features: FeatureItem[] = [
-  {
-    icon: Users,
-    title: 'Clientes organizados',
-    description:
-      'Cadastre contatos, histórico e observações em um só lugar — sem planilhas.',
-  },
-  {
-    icon: Calendar,
-    title: 'Agenda inteligente',
-    description:
-      'Agende atendimentos, evite conflitos de horário e reduza faltas com lembretes.',
-  },
-  {
-    icon: FileText,
-    title: 'Histórico e evolução',
-    description:
-      'Registre cada atendimento e acompanhe a evolução dos seus clientes ao longo do tempo.',
-  },
-  {
-    icon: FolderOpen,
-    title: 'Arquivos seguros',
-    description:
-      'Anexe fotos e documentos na ficha do cliente, com armazenamento protegido.',
-  },
-  {
-    icon: Wallet,
-    title: 'Financeiro simples',
-    description:
-      'Controle o que recebeu de cada cliente — sem ERP, sem complicação.',
-  },
-  {
-    icons: [Smartphone, Monitor],
-    title: 'Celular, tablet e computador',
-    description:
-      'Use no dia a dia no celular, tablet ou computador — onde você realmente trabalha.',
-  },
-]
+type LandingPageProps = {
+  isLoggedIn?: boolean
+  clinic: LandingClinicData
+}
 
-const professions = [
-  'Clínicas',
-  'Salões',
-  'Estética',
-  'Psicólogos',
-  'Nutricionistas',
-  'Barbeiros',
-  'Personal trainers',
-]
+export function LandingPage({ isLoggedIn = false, clinic }: LandingPageProps) {
+  const bookingHref = clinic.bookingSlug ? `/p/${clinic.bookingSlug}` : null
 
-const steps = [
-  { label: 'Cliente', description: 'Cadastre quem você atende' },
-  { label: 'Agendamento', description: 'Marque data e horário' },
-  { label: 'Atendimento', description: 'Realize o serviço' },
-  { label: 'Registro', description: 'Documente histórico e evolução' },
-  { label: 'Pagamento', description: 'Controle o que recebeu' },
-]
-
-export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   return (
-    <div className={BRAND.surface}>
-      <ShellHeader>
-        <Logo href="/" size="md" variant="full" />
-        <nav className="flex items-center gap-2 sm:gap-3">
+    <div className="min-h-screen bg-[#f7f0eb] text-[#3d1f24]">
+      <header className="border-b border-white/10 bg-[#1a1214] text-white">
+        <div className="mx-auto flex min-h-14 max-w-5xl items-center justify-between gap-3 px-4">
+          <Logo href="/" size="sm" variant="header" />
+          <nav className="flex items-center gap-2">
             {isLoggedIn ? (
-              <Button asChild className="min-h-11">
+              <Button
+                asChild
+                className="min-h-11 bg-[#b76e79] text-white hover:bg-[#a35f6a]"
+              >
                 <Link href="/dashboard">
-                  Ir para o painel
-                  <ArrowRight />
+                  Login
+                  <ArrowRight className="size-4" />
                 </Link>
               </Button>
             ) : (
-              <Button asChild className="min-h-11">
-                <Link href="/login">Entrar na demonstração</Link>
+              <Button
+                asChild
+                variant="outline"
+                className="min-h-11 border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
+                <Link href="/login">Login</Link>
               </Button>
             )}
           </nav>
-      </ShellHeader>
+        </div>
+      </header>
 
       <main>
-        <section className={BRAND.hero}>
-          <div className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-primary/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 size-64 rounded-full bg-primary/5 blur-3xl" />
-          <div className="relative mx-auto max-w-5xl px-4 py-16 sm:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="secondary" className="mb-4 border-primary/20 bg-primary/10 text-primary">
-              Demonstração — gestão de atendimento
-            </Badge>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-5xl sm:leading-tight">
-              {APP_TAGLINE.split('•').map((part, index) => (
-                <span key={part}>
-                  {index > 0 ? ' • ' : null}
-                  {index === 0 ? (
-                    <span className="text-primary">{part.trim()}</span>
-                  ) : (
-                    part.trim()
-                  )}
-                </span>
-              ))}
-            </h1>
-            <p className="text-muted-foreground mt-4 text-base leading-relaxed sm:text-lg">
-              {APP_SLOGAN}. Sistema de agenda e atendimento para clínicas,
-              salões e profissionais — sem caderno, sem planilha e sem depender
-              do WhatsApp para gerir o dia a dia.
+        {/* Hero */}
+        <section className="relative overflow-hidden bg-[#1a1214] text-white">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(183,110,121,0.2)_0%,_transparent_55%)]" />
+          <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 py-14 text-center sm:py-20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={APP_LOGO_PATH}
+              alt={APP_NAME}
+              className="mb-6 h-auto w-full max-w-[20rem] object-contain sm:max-w-[26rem]"
+            />
+            <h1 className="sr-only">{APP_NAME}</h1>
+            <p className="text-sm font-medium tracking-[0.18em] text-[#c9a07a] uppercase">
+              {APP_TAGLINE}
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
+              {APP_PRESENTATION}
+            </p>
+            <div className="mt-9 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              {bookingHref ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="min-h-11 bg-[#b76e79] text-white hover:bg-[#a35f6a]"
+                >
+                  <Link href={bookingHref}>Agendar atendimento</Link>
+                </Button>
+              ) : null}
               {isLoggedIn ? (
-                <Button asChild size="lg" className="min-h-11">
-                  <Link href="/dashboard">
-                    Ir para o painel
-                    <ArrowRight />
-                  </Link>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="min-h-11 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/dashboard">Login</Link>
                 </Button>
               ) : (
-                <>
-                  <Button asChild size="lg" className="min-h-11">
-                    <Link href="/login">
-                      Entrar na demonstração
-                      <ArrowRight />
-                    </Link>
-                  </Button>
-                </>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="min-h-11 border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/login">Login</Link>
+                </Button>
               )}
             </div>
           </div>
-
-          <div className="mt-14 grid gap-4 sm:grid-cols-3">
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="py-5 text-center">
-                <p className="text-2xl font-semibold">+ organização</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Tudo num só lugar
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-primary/15 bg-primary/5">
-              <CardContent className="py-5 text-center">
-                <p className="text-primary text-2xl font-semibold">Menos faltas</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Lembretes prontos para enviar
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-primary/15 bg-secondary/50">
-              <CardContent className="py-5 text-center">
-                <p className="text-2xl font-semibold">Mais histórico</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Evolução de cada cliente
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          </div>
         </section>
 
-        <section className={BRAND.sectionMuted + ' px-4 py-14'}>
-          <div className="mx-auto max-w-5xl">
-            <h2 className={cn('text-center', BRAND.pageTitle)}>Para quem é</h2>
-            <p className="text-muted-foreground mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed">
-              {APP_NAME} reúne agenda e organização administrativa simples
-              para clínicas, salões, estética e profissionais que atendem por
-              horário marcado.
-            </p>
-            <p className="text-muted-foreground mx-auto mt-6 text-center text-xs uppercase tracking-wide">
-              Exemplos de quem pode usar
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {professions.map((profession) => (
-                <Badge key={profession} variant="outline" className="border-primary/20 px-3 py-1.5">
-                  {profession}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </section>
-
+        {/* Profissionais + serviços */}
         <section className="mx-auto max-w-5xl px-4 py-16">
           <div className="mb-10 text-center">
-            <h2 className="text-2xl font-semibold">Tudo que você precisa no dia a dia</h2>
-            <p className="text-muted-foreground mt-2 text-sm">
-              O valor não é só a agenda — é a organização completa do seu
-              atendimento.
+            <h2 className="text-2xl font-semibold tracking-tight">Nossa equipe</h2>
+            <p className="mt-2 text-sm text-[#7a5a60]">
+              Serviços por profissional — atualizados conforme o cadastro do
+              salão.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon
-              return (
-                <Card key={feature.title}>
-                  <CardHeader>
-                    <div className="bg-primary/10 text-primary mb-2 flex h-10 w-fit items-center gap-2 rounded-lg px-3">
-                      {feature.icons ? (
-                        feature.icons.map((DeviceIcon, index) => (
-                          <DeviceIcon key={index} className="size-4" />
-                        ))
-                      ) : Icon ? (
-                        <Icon className="size-5" />
-                      ) : null}
-                    </div>
-                    <CardTitle className="text-base">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
 
-        <section className={BRAND.sectionMuted + ' px-4 py-16'}>
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-center text-2xl font-semibold">Como funciona</h2>
-            <p className="text-muted-foreground mt-2 text-center text-sm">
-              Do primeiro contato ao recebimento — um fluxo simples e natural.
+          {clinic.professionals.length === 0 ? (
+            <p className="text-center text-sm text-[#7a5a60]">
+              Em breve: profissionais e serviços da clínica.
             </p>
-            <div className="mt-10 grid gap-4 sm:grid-cols-5">
-              {steps.map((step, index) => (
-                <div key={step.label} className="text-center">
-                  <div className="bg-primary text-primary-foreground mx-auto flex size-9 items-center justify-center rounded-full text-sm font-semibold">
-                    {index + 1}
+          ) : (
+            <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {clinic.professionals.map((pro) => (
+                <li
+                  key={pro.id}
+                  className="flex flex-col overflow-hidden rounded-2xl border border-[#e0d0c8] bg-white shadow-sm"
+                >
+                  <div className="flex aspect-[4/3] items-center justify-center bg-[#1a1214]">
+                    {pro.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={pro.photo_url}
+                        alt={pro.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl font-light tracking-wide text-[#c9a07a]">
+                        {pro.name
+                          .split(' ')
+                          .slice(0, 2)
+                          .map((p) => p[0])
+                          .join('')
+                          .toUpperCase()}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-3 font-medium">{step.label}</p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {step.description}
-                  </p>
-                </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="text-lg font-semibold">{pro.name}</h3>
+                    {pro.bio ? (
+                      <p className="mt-1 text-sm text-[#b76e79]">{pro.bio}</p>
+                    ) : null}
+                    {pro.services.length > 0 ? (
+                      <ul className="mt-4 space-y-2 border-t border-[#f0e4de] pt-4">
+                        {pro.services.map((service) => (
+                          <li
+                            key={service.id}
+                            className="flex items-baseline justify-between gap-3 text-sm"
+                          >
+                            <span>{service.name}</span>
+                            {formatPrice(service.price) ? (
+                              <span className="shrink-0 text-[#7a5a60]">
+                                {formatPrice(service.price)}
+                              </span>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-4 text-sm text-[#7a5a60]">
+                        Serviços em atualização.
+                      </p>
+                    )}
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
+          )}
+        </section>
+
+        {/* Diferenciais */}
+        <section className="border-y border-[#e0d0c8] bg-white px-4 py-16">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="mb-10 text-center text-2xl font-semibold tracking-tight">
+              Por que nos escolher
+            </h2>
+            <ul className="grid gap-8 sm:grid-cols-3">
+              {APP_DIFFERENTIALS.map((item) => (
+                <li key={item.title} className="text-center sm:text-left">
+                  <h3 className="font-semibold text-[#b76e79]">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#7a5a60]">
+                    {item.description}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 py-16">
-          <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-background to-secondary/40">
-            <CardContent className="p-8 sm:p-10">
-              <div className="mx-auto max-w-xl text-center">
-                <h2 className="text-2xl font-semibold">
-                  Experimente o fluxo completo
-                </h2>
-                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-                  Clientes, agenda, histórico, arquivos e recebimentos — em um
-                  ambiente de demonstração pronto para testar no celular.
-                </p>
-                <ul className="mt-6 space-y-2 text-left text-sm sm:mx-auto sm:max-w-sm">
-                  {[
-                    'Agenda online, clientes e histórico',
-                    'Registros de atendimento e evolução',
-                    'Pagamentos e recibo',
-                    'Funciona no celular e no computador',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button asChild size="lg" className="mt-8 min-h-11 w-full sm:w-auto">
-                  <Link href="/login">Entrar na demonstração</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* CTA */}
+        <section className="mx-auto max-w-5xl px-4 py-16 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Pronta para o seu próximo horário?
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-[#7a5a60]">
+            Escolha a profissional e o serviço com poucos toques.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {bookingHref ? (
+              <Button
+                asChild
+                size="lg"
+                className="min-h-11 bg-[#b76e79] text-white hover:bg-[#a35f6a]"
+              >
+                <Link href={bookingHref}>Agendar atendimento</Link>
+              </Button>
+            ) : null}
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="min-h-11 border-[#b76e79]/40 text-[#3d1f24]"
+            >
+              <Link href="/login">Login</Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* Contato */}
+        <section className="bg-[#1a1214] px-4 py-14 text-white">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="text-center text-xl font-semibold tracking-tight text-[#c9a07a]">
+              Contato
+            </h2>
+            <ul className="mx-auto mt-8 flex max-w-lg flex-col gap-4 text-sm text-white/80">
+              <li>
+                <a
+                  href={APP_CONTACT.whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-2 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <Phone className="size-4 shrink-0 text-[#c9a07a]" />
+                  <span>WhatsApp: {APP_CONTACT.whatsappDisplay}</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={APP_CONTACT.instagramLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-2 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <AtSign className="size-4 shrink-0 text-[#c9a07a]" />
+                  <span>{APP_CONTACT.instagram}</span>
+                </a>
+              </li>
+              <li className="flex min-h-11 items-center gap-3 px-2">
+                <MapPin className="size-4 shrink-0 text-[#c9a07a]" />
+                <span>{APP_CONTACT.address}</span>
+              </li>
+            </ul>
+          </div>
         </section>
       </main>
 
-      <footer className="border-t bg-secondary/40 px-4 py-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-center text-sm text-muted-foreground sm:flex-row sm:text-left">
-          <p>© {new Date().getFullYear()} {APP_NAME} — demonstração</p>
-          <div className="flex gap-4">
-            <Link href="/login" className="hover:text-foreground">
-              Entrar na demonstração
-            </Link>
-          </div>
-        </div>
+      <footer className="border-t border-white/10 bg-[#140e10] px-4 py-6 text-center text-xs text-white/50">
+        © {new Date().getFullYear()} {APP_NAME}
       </footer>
     </div>
   )

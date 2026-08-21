@@ -13,8 +13,8 @@
 }
 
   /*
-  Paleta Atendo
-  Azul royal #2060e0 · Navy #002060 · Sky #80a0e0 · Laranja #fd6c0f · Branco
+  Paleta Clínica Mariana Oliveira
+  Rose gold #c9a07a · Rose #b76e79 · Burgundy #3d1f24 · Creme #f7f0eb · Branco
   */
 @layer components {
   .brand-surface {
@@ -28,19 +28,19 @@
   .brand-auth-surface::before {
     content: '';
     @apply pointer-events-none absolute -right-20 -top-20 size-72 rounded-full blur-3xl;
-    background-color: color-mix(in srgb, var(--brand-blue-sky) 35%, transparent);
+    background-color: color-mix(in srgb, var(--brand-rose-soft) 40%, transparent);
   }
 
   .brand-auth-surface::after {
     content: '';
     @apply pointer-events-none absolute -bottom-16 -left-16 size-64 rounded-full blur-3xl;
-    background-color: color-mix(in srgb, var(--brand-orange) 12%, transparent);
+    background-color: color-mix(in srgb, var(--brand-gold) 18%, transparent);
   }
 
   .brand-header {
     @apply w-full border-b shadow-sm;
     background-color: var(--brand-white);
-    border-color: color-mix(in srgb, var(--brand-blue) 18%, white);
+    border-color: color-mix(in srgb, var(--brand-rose) 18%, white);
     color: var(--foreground);
   }
 
@@ -90,7 +90,7 @@
   }
 
   .brand-sidebar-nav-link-active {
-    background-color: var(--brand-orange);
+    background-color: var(--brand-rose);
     @apply font-medium text-white shadow-sm;
   }
 
@@ -99,11 +99,11 @@
   }
 
   .brand-sidebar-nav-link-inactive:hover {
-    background-color: color-mix(in srgb, var(--brand-blue) 22%, var(--sidebar));
+    background-color: color-mix(in srgb, var(--brand-gold) 22%, var(--sidebar));
   }
 
   .brand-bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-sidebar-border bg-sidebar pb-safe shadow-[0_-2px_12px_rgba(0,32,96,0.25)] md:hidden;
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-sidebar-border bg-sidebar pb-safe shadow-[0_-2px_12px_rgba(61,31,36,0.35)] md:hidden;
   }
 
   .brand-bottom-nav-link {
@@ -111,7 +111,7 @@
   }
 
   .brand-bottom-nav-link-active {
-    background-color: var(--brand-orange);
+    background-color: var(--brand-rose);
     @apply font-medium text-white shadow-sm;
   }
 
@@ -121,7 +121,7 @@
 
   .brand-bottom-nav-link-inactive:hover {
     @apply text-sidebar-foreground;
-    background-color: color-mix(in srgb, var(--brand-blue) 22%, var(--sidebar));
+    background-color: color-mix(in srgb, var(--brand-gold) 22%, var(--sidebar));
   }
 
   .brand-page-title {
@@ -143,7 +143,7 @@
 
   .brand-internal-badge {
     @apply inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium text-white;
-    background-color: var(--brand-orange);
+    background-color: var(--brand-rose);
   }
 }
 
@@ -151,85 +151,86 @@
   :root {
     /* Cores da logomarca */
     --brand-white: #ffffff;
-    --brand-blue: #2060e0;
-    --brand-blue-dark: #002060;
-    --brand-blue-sky: #80a0e0;
-    --brand-blue-light: #e8f2fb;
-    --brand-orange: #fd6c0f;
+    --brand-gold: #c9a07a;
+    --brand-rose: #b76e79;
+    --brand-rose-soft: #e8cfc8;
+    --brand-cream: #f7f0eb;
+    --brand-burgundy: #3d1f24;
+    --brand-burgundy-deep: #2a1519;
 
-    /* App — fundo branco, texto navy */
+    /* App — fundo claro, acentos rose gold */
     --background: var(--brand-white);
-    --foreground: var(--brand-blue-dark);
+    --foreground: var(--brand-burgundy);
     --card: var(--brand-white);
-    --card-foreground: var(--brand-blue-dark);
+    --card-foreground: var(--brand-burgundy);
     --popover: var(--brand-white);
-    --popover-foreground: var(--brand-blue-dark);
-    --primary: var(--brand-blue);
+    --popover-foreground: var(--brand-burgundy);
+    --primary: var(--brand-rose);
     --primary-foreground: var(--brand-white);
-    --secondary: var(--brand-blue-light);
-    --secondary-foreground: var(--brand-blue-dark);
-    --muted: #f4f8fd;
-    --muted-foreground: #5a7cad;
-    --accent: var(--brand-blue-light);
-    --accent-foreground: var(--brand-blue-dark);
-    --destructive: var(--brand-blue-dark);
+    --secondary: var(--brand-cream);
+    --secondary-foreground: var(--brand-burgundy);
+    --muted: #f3e9e4;
+    --muted-foreground: #7a5a60;
+    --accent: var(--brand-rose-soft);
+    --accent-foreground: var(--brand-burgundy);
+    --destructive: #8b2942;
     --destructive-foreground: var(--brand-white);
-    --success: var(--brand-blue);
+    --success: #6b8f71;
     --success-foreground: var(--brand-white);
-    --warning: var(--brand-orange);
-    --warning-foreground: var(--brand-white);
-    --info: var(--brand-blue-sky);
-    --info-foreground: var(--brand-blue-dark);
-    --border: #c8daf0;
-    --input: #c8daf0;
-    --ring: var(--brand-blue);
+    --warning: var(--brand-gold);
+    --warning-foreground: var(--brand-burgundy);
+    --info: var(--brand-gold);
+    --info-foreground: var(--brand-burgundy);
+    --border: #e0d0c8;
+    --input: #e0d0c8;
+    --ring: var(--brand-rose);
     --radius: 0.75rem;
 
-    /* Sidebar — navy da logo; item ativo = laranja */
-    --sidebar: var(--brand-blue-dark);
+    /* Sidebar — burgundy; item ativo = rose */
+    --sidebar: var(--brand-burgundy);
     --sidebar-foreground: var(--brand-white);
-    --sidebar-muted: var(--brand-blue-sky);
-    --sidebar-accent: #0a3a7a;
+    --sidebar-muted: var(--brand-rose-soft);
+    --sidebar-accent: #523038;
     --sidebar-accent-foreground: var(--brand-white);
-    --sidebar-primary: var(--brand-orange);
+    --sidebar-primary: var(--brand-rose);
     --sidebar-primary-foreground: var(--brand-white);
-    --sidebar-border: #0040a8;
+    --sidebar-border: #523038;
   }
 
   .dark {
-    --background: #001540;
+    --background: var(--brand-burgundy-deep);
     --foreground: var(--brand-white);
-    --card: #002060;
+    --card: var(--brand-burgundy);
     --card-foreground: var(--brand-white);
-    --popover: #002060;
+    --popover: var(--brand-burgundy);
     --popover-foreground: var(--brand-white);
-    --primary: var(--brand-blue);
-    --primary-foreground: var(--brand-white);
-    --secondary: #0a3a7a;
+    --primary: var(--brand-gold);
+    --primary-foreground: var(--brand-burgundy-deep);
+    --secondary: #523038;
     --secondary-foreground: var(--brand-white);
-    --muted: #0a3a7a;
-    --muted-foreground: var(--brand-blue-sky);
-    --accent: #0a3a7a;
+    --muted: #523038;
+    --muted-foreground: var(--brand-rose-soft);
+    --accent: #523038;
     --accent-foreground: var(--brand-white);
-    --destructive: var(--brand-orange);
+    --destructive: var(--brand-rose);
     --destructive-foreground: var(--brand-white);
-    --success: var(--brand-blue);
+    --success: #6b8f71;
     --success-foreground: var(--brand-white);
-    --warning: var(--brand-orange);
-    --warning-foreground: var(--brand-white);
-    --info: var(--brand-blue-sky);
-    --info-foreground: var(--brand-blue-dark);
-    --border: #0040a8;
-    --input: #0040a8;
-    --ring: var(--brand-blue-sky);
-    --sidebar: #001540;
+    --warning: var(--brand-gold);
+    --warning-foreground: var(--brand-burgundy-deep);
+    --info: var(--brand-gold);
+    --info-foreground: var(--brand-burgundy-deep);
+    --border: #523038;
+    --input: #523038;
+    --ring: var(--brand-gold);
+    --sidebar: var(--brand-burgundy-deep);
     --sidebar-foreground: var(--brand-white);
-    --sidebar-muted: var(--brand-blue-sky);
-    --sidebar-accent: #0a3a7a;
+    --sidebar-muted: var(--brand-rose-soft);
+    --sidebar-accent: #523038;
     --sidebar-accent-foreground: var(--brand-white);
-    --sidebar-primary: var(--brand-orange);
+    --sidebar-primary: var(--brand-rose);
     --sidebar-primary-foreground: var(--brand-white);
-    --sidebar-border: #0040a8;
+    --sidebar-border: #523038;
   }
 
   * {

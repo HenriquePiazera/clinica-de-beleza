@@ -1,123 +1,100 @@
-# Deploy na Vercel (link para clientes testarem)
+# Deploy na Vercel — Clínica de Beleza Mariana Oliveira
 
-O app local usa `prisma dev`. Na Vercel isso **não existe** — é obrigatório um **Postgres na nuvem**.
+Checklist curto: [CHECKLIST_DEPLOY_CLIENTE.md](./CHECKLIST_DEPLOY_CLIENTE.md)
 
-Recomendação simples e gratuita: [Neon](https://neon.tech) (só banco).  
-Alternativa: [Supabase](https://supabase.com) (Postgres; storage opcional depois).
+O app local usa `prisma dev`. Na Vercel isso **não existe** — use **Postgres Neon NOVO**.
 
-Upload de arquivos **não persiste** no filesystem da Vercel nesta demo. Clientes, agenda, atendimento e financeiro funcionam; anexos/fotos de serviço podem falhar até haver storage em nuvem.
+**Nunca** reutilize `DATABASE_URL`, `ENCRYPTION_MASTER_KEY` ou `AUTH_SECRET` de outra demo.
 
----
-
-## 1. Criar banco (Neon)
-
-1. Conta em https://neon.tech → **New project**
-2. Copie a connection string (**pooled** / `-pooler` se existir)
-3. Formato típico:
-   ```
-   postgresql://USER:PASSWORD@ep-xxxx.region.aws.neon.tech/neondb?sslmode=require
-   ```
+Fotos de profissionais em `public/professionals/` sobem com o deploy (estáticas). Upload de anexos no filesystem da Vercel **não persiste** (fora do escopo).
 
 ---
 
-## 2. Aplicar schema + seed no banco da nuvem
-
-No PC, na pasta do projeto (PowerShell):
+## 0. Gerar segredos
 
 ```powershell
-# Use a URL do Neon (não a do prisma local)
-$env:DATABASE_URL="postgresql://..."
+npm run deploy:secrets
+```
+
+Cole a saída nas env vars da Vercel. Modelo completo: `.env.production.example`.
+
+---
+
+## 1. Criar banco (Neon) — projeto novo
+
+1. https://neon.tech → **New project** (`clinica-mariana-oliveira`)
+2. Connection string **pooled** (`-pooler`) com `?sslmode=require`
+
+---
+
+## 2. Schema + seed no Neon
+
+```powershell
+$env:DATABASE_URL="postgresql://...neon-pooler...?sslmode=require"
 
 npx prisma db push
 npx tsx scripts/seed-demo.mts
 ```
 
-Login seed: `demo@assistente-admin.local` / `demo1234`
+| Quem | E-mail | Senha |
+|------|--------|-------|
+| Mariana | `mariana@clinica-mariana.local` | `beleza1234` |
+| Camila | `camila@clinica-mariana.local` | `beleza1234` |
+| Juliana | `juliana@clinica-mariana.local` | `beleza1234` |
 
 ---
 
-## 3. Gerar segredos
+## 3. GitHub → Vercel
 
-```powershell
-openssl rand -base64 32
-```
+1. Push do repo `HenriquePiazera/clinica-de-beleza`
+2. Vercel → **Add New Project** → importar o repo
+3. Framework: **Next.js** · Node.js **22.x**
+4. Env vars (Production) — ver tabela abaixo
+5. **Deploy**
 
-Rode **3 vezes** (ou use valores diferentes) para:
+O arquivo `vercel.json` já define região `gru1` e cron horário em `/api/cron/reminders`.
 
-- `AUTH_SECRET` / `NEXTAUTH_SECRET` (podem ser iguais)
-- `ENCRYPTION_MASTER_KEY`
-- `CRON_SECRET` (opcional nesta demo)
-
----
-
-## 4. Conectar o GitHub na Vercel
-
-1. https://vercel.com → **Add New Project**
-2. Importe `HenriquePiazera/demo-assistente-administrativo`
-3. Framework: **Next.js** (automático). Em **Node.js Version**, use **22.x** (o `package.json` exige `>=22`).
-4. **Não** use o `.env` local — configure as variáveis abaixo no painel
-
-### Variáveis de ambiente (Production)
+### Variáveis (Production)
 
 | Variável | Valor |
 |----------|--------|
-| `DATABASE_URL` | Connection string do Neon |
-| `AUTH_SECRET` | Segredo gerado |
-| `NEXTAUTH_SECRET` | Mesmo de `AUTH_SECRET` |
-| `NEXTAUTH_URL` | `https://SEU-PROJETO.vercel.app` (ajuste após o 1º deploy se a URL mudar) |
-| `ENCRYPTION_MASTER_KEY` | Segredo gerado |
+| `DATABASE_URL` | Neon **novo** (pooled) |
+| `AUTH_SECRET` | `npm run deploy:secrets` |
+| `NEXTAUTH_SECRET` | Igual a `AUTH_SECRET` |
+| `NEXTAUTH_URL` | `https://SEU-PROJETO.vercel.app` (ajuste após 1º deploy) |
+| `ENCRYPTION_MASTER_KEY` | Segredo **novo** |
 | `BILLING_ENABLED` | `false` |
-| `DEMO_MODE` | `true` |
-| `DEMO_SESSION_HOURS` | `2` |
-| `DEMO_BYPASS_EMAILS` | `demo@assistente-admin.local` |
-| `PLATFORM_OWNER_EMAILS` | `demo@assistente-admin.local` |
-| `BETA_ALLOWED_EMAILS` | `demo@assistente-admin.local` |
+| `DEMO_MODE` | `false` |
 | `CRON_SECRET` | Segredo gerado |
-
-Depois do primeiro deploy, confira a URL real (ex.: `https://demo-assistente-administrativo.vercel.app`) e atualize `NEXTAUTH_URL` se necessário; redeploy.
-
-5. **Deploy**
-
----
-
-## 5. Link de 2h para o cliente
-
-Com `DEMO_MODE=true`, o cliente entra por `/demo/<token>` (primeira visita inicia a janela de 2h).
-
-Gerar o link **apontando para o banco de produção**:
-
-```powershell
-$env:DATABASE_URL="postgresql://...neon..."
-$env:NEXTAUTH_URL="https://SEU-PROJETO.vercel.app"
-$env:DEMO_SESSION_HOURS="2"
-
-npm run demo:link -- "cliente-clinica-x"
-```
-
-Envie ao cliente a URL impressa, por exemplo:
-
-`https://SEU-PROJETO.vercel.app/demo/abc123...`
-
-Conta para explorar (se bypass/login direto):  
-`demo@assistente-admin.local` / `demo1234`
+| `PLATFORM_OWNER_EMAILS` | `mariana@clinica-mariana.local` |
+| `BETA_ALLOWED_EMAILS` | e-mails das 3 profissionais (seed) |
+| `DEMO_BYPASS_EMAILS` | `mariana@clinica-mariana.local` |
+| `RESEND_*` / `VAPID_*` | Opcional no 1º teste; configure para e-mail/push |
 
 ---
 
-## 6. Checklist rápido
+## 4. Domínio (quando tiver)
 
-- [ ] `prisma db push` + seed no Neon
-- [ ] Env vars na Vercel
-- [ ] Deploy verde
-- [ ] Abrir a URL → landing → login ou link `/demo/...`
-- [ ] Criar um cliente e um agendamento de teste
+Vercel → Domains → DNS → atualizar `NEXTAUTH_URL` → redeploy.
+
+---
+
+## 5. Validar e enviar ao cliente
+
+- [ ] Landing `/` com equipe e fotos
+- [ ] Agendar atendimento
+- [ ] Login Mariana / Camila / Juliana
+- [ ] `DEMO_MODE=false`
+
+Texto modelo na checklist.
 
 ---
 
 ## Problemas comuns
 
-| Sintoma | Causa provável |
-|---------|----------------|
-| Erro de banco / Prisma | `DATABASE_URL` errada ou schema não aplicado |
-| Login redireciona em loop | `NEXTAUTH_URL` diferente da URL real |
-| “Sessão de demo expirada” | Link de 2h esgotado — gere outro com `npm run demo:link` |
-| Upload de arquivo falha | Esperado nesta demo na Vercel (sem storage em nuvem) |
+| Sintoma | Causa |
+|---------|--------|
+| Erro de banco | `DATABASE_URL` errada ou sem `db push` |
+| Loop no login | `NEXTAUTH_URL` ≠ URL real |
+| Demo expirada | `DEMO_MODE=true` — use `false` |
+| Cron não roda | Plano Vercel / `CRON_SECRET` |

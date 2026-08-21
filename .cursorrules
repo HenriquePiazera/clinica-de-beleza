@@ -1,22 +1,24 @@
-# REGRAS DO PROJETO — Demo Assistente Administrativo
+# REGRAS DO PROJETO — Clínica de Beleza Mariana Oliveira
 
 Você atua como Tech Lead deste repositório.
 
 Este arquivo é a **fonte da verdade para a IA** neste projeto.
-Não existe `MASTER_CONTEXT_V4.md`. Não consultar nem recriar regras de SaaS
-comerciais (assinatura, trial de 14 dias como produto, upgrade de plano na UI).
+Cópia personalizada da demo "Demo Assistente Administrativo" para cliente real.
+Não editar a pasta da demo original. Não recriar regras de SaaS comerciais
+(assinatura, trial de 14 dias como produto, upgrade de plano na UI).
 
 ---
 
 ## O QUE É ESTE PROJETO
 
-- Nome do produto: **Demo Assistente Administrativo** (`src/lib/brand.ts`)
-- App web de **demonstração / portfólio** para clientes de freela
-- Público: clínicas, salões, estética e profissionais que agendam e atendem
+- Nome: **Clínica de Beleza Mariana Oliveira** (`src/lib/brand.ts`)
+- App web entregue ao cliente (clínica de estética)
 - **Não é SaaS com assinantes** — sem vender planos
 - Roda **local** com `npm run dev` (Postgres via `prisma dev`)
-- Deploy opcional na **Vercel** para testes com clientes: `docs/DEPLOY_VERCEL.md`
-  (Postgres Neon/Supabase na nuvem; não misturar com Server Ino)
+- Deploy na **Vercel** + Neon **novos**: `docs/DEPLOY_VERCEL.md`
+- Handoff: `docs/ENTREGA_CLIENTE.md`
+- Produção: `DEMO_MODE=false`, `BILLING_ENABLED=false`
+- Nunca reutilizar `DATABASE_URL` / `ENCRYPTION_MASTER_KEY` / `AUTH_SECRET` da demo
 
 ### Fluxo de negócio a preservar
 
@@ -38,35 +40,37 @@ Somente depois gerar código. Nunca pular direto para a solução.
 
 ---
 
-## PRIORIDADE DE TRABALHO (demo)
+## PRIORIDADE DE TRABALHO (cliente)
 
 1. Fluxo ponta a ponta estável
-2. Marca Demo Assistente Administrativo neutra
-3. Modo demonstração (`DEMO_MODE`, link `/demo/<token>`)
-4. Landing sem venda de plano
-5. Seed / conta demo
+2. Marca Clínica de Beleza Mariana Oliveira
+3. Produção com `DEMO_MODE=false` e `BILLING_ENABLED=false`
+4. Landing sem venda de plano SaaS
+5. Seed com 3 profissionais / serviços / horários
+6. Deploy Vercel + Neon (docs oficiais do repo)
 
 ### Desenvolvimento local
 
 - `npm run dev` — prepara `.env`, Postgres local, schema, seed e Next
-- Login: `demo@assistente-admin.local` / `demo1234`
-- Anexos em pasta local `storage/` (não usar Supabase)
-- Não reintroduzir Vercel, Supabase, Sentry ou docs de deploy externos
+- Login: `mariana@clinica-mariana.local` / `beleza1234`
+- Anexos em pasta local `storage/` (não usar Supabase Storage)
+- Deploy cloud: seguir só `docs/DEPLOY_VERCEL.md` (Neon novo, segredos novos)
 
-Não antecipar Mobile nativo, PWA avançado, Stripe, microsserviços sem pedido explícito.
+Não antecipar Mobile nativo, PWA avançado, Stripe, WhatsApp API, microsserviços sem pedido explícito.
 
 ---
 
 ## MODO DEMONSTRAÇÃO
 
+Código ainda existe, mas **produção deste cliente** usa `DEMO_MODE=false`.
 Arquivos: `src/lib/demo.ts`, `src/app/demo/[token]/route.ts`,
 `src/app/demo-expired/page.tsx`, `scripts/create-demo-link.mts`.
 
 | Variável | Papel |
 |----------|--------|
-| `DEMO_MODE=true` | Freio de tempo + banner |
-| `DEMO_SESSION_HOURS=2` | Janela após 1º acesso ao link |
-| `DEMO_BYPASS_EMAILS` | Contas que não expiram |
+| `DEMO_MODE=false` | Produção do cliente (sem freio de 2h) |
+| `DEMO_SESSION_HOURS=2` | Só se `DEMO_MODE=true` |
+| `DEMO_BYPASS_EMAILS` | Contas que não expiram (se demo on) |
 | `BILLING_ENABLED=false` | Sem cobrança |
 | `BETA_ALLOWED_EMAILS` | Cadastro fechado (opcional) |
 
@@ -88,7 +92,7 @@ Arquivos: `src/lib/demo.ts`, `src/app/demo/[token]/route.ts`,
 
 **Validação:** Zod front e back.
 
-**Marca:** só `src/lib/brand.ts` e assets do Demo Assistente Administrativo.
+**Marca:** só `src/lib/brand.ts` e assets da Clínica Mariana Oliveira.
 
 ---
 
@@ -96,9 +100,9 @@ Arquivos: `src/lib/demo.ts`, `src/app/demo/[token]/route.ts`,
 
 Next.js 14 App Router · React · TypeScript · Tailwind · shadcn/ui ·
 Server Actions · PostgreSQL local (Prisma + `prisma dev`) · Auth.js ·
-arquivos em `storage/` local.
+arquivos em `storage/` local · deploy Vercel + Neon (produção).
 
-Monólito modular. Sem microsserviços / multi-banco / plataformas de cloud.
+Monólito modular. Sem microsserviços / multi-banco.
 
 Estrutura: `src/app`, `components`, `features`, `services`, `schemas`, `lib`.
 
@@ -110,10 +114,11 @@ Estrutura: `src/app`, `components`, `features`, `services`, `schemas`, `lib`.
 - Nunca duplicar código
 - Nunca alterar arquitetura/auth sem autorização
 - Nunca remover crypto, audit ou `checkPlanLimit`
-- Nunca adicionar Stripe / planos pagos
-- Nunca reintroduzir Vercel, Supabase, Sentry ou configs de deploy cloud
+- Nunca adicionar Stripe / planos pagos / WhatsApp API sem pedido
+- Nunca reutilizar segredos ou `DATABASE_URL` da demo original
 - Nunca expor marca de outro produto na UI
 - Nunca usar o nome "Atendo" neste projeto
+- Não editar a pasta da demo original
 
 ---
 
@@ -123,7 +128,10 @@ Estrutura: `src/app`, `components`, `features`, `services`, `schemas`, `lib`.
 - [ ] Isolamento + Zod + ERROR_CODES
 - [ ] Crypto + audit em writes
 - [ ] UI 375px / botões ≥ 44px
-- [ ] Sem marca/copy de outro produto
+- [ ] Marca Clínica Mariana Oliveira
+- [ ] `DEMO_MODE=false` / `BILLING_ENABLED=false` em produção
+- [ ] `npm run test` passa
+- [ ] `npm run test:e2e` passa (com setup local)
 - [ ] `npm run dev` sobe localmente
 
 ---

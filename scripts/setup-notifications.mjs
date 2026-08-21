@@ -117,10 +117,9 @@ if (updates.length > 0) {
 const resendKey = map.get('RESEND_API_KEY')?.replace(/^["']|["']$/g, '') ?? ''
 if (!resendKey || resendKey.includes('placeholder')) {
   console.log('\n⚠️  RESEND_API_KEY ainda não configurada.')
-  console.log('   1. Crie conta em https://resend.com')
-  console.log('   2. API Keys → Create API Key')
-  console.log('   3. Cole em .env: RESEND_API_KEY="re_..."')
-  console.log('   4. Teste: npm run test:notifications -- --email seu@email.com')
+  console.log('   1. Conta em https://resend.com → API Keys → Create API Key')
+  console.log('   2. npm run configure:resend -- --key=re_SUA_CHAVE')
+  console.log('   3. npm run test:notifications -- --email=seu@email.com')
 } else {
   console.log('\n✓ RESEND_API_KEY presente')
 }

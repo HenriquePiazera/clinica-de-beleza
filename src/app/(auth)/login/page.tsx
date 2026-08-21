@@ -37,8 +37,8 @@ export default async function LoginPage({
       <CardContent>
         {hasError ? (
           <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            E-mail ou senha incorretos. Use a conta demo:
-            demo@assistente-admin.local / demo1234
+            E-mail ou senha incorretos. Conta seed:
+            mariana@clinica-mariana.local / beleza1234
           </p>
         ) : null}
         {isDemoMode() && demoStarted ? (

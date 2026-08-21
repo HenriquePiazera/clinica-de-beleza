@@ -11,13 +11,13 @@ type LogoProps = {
 }
 
 const fullSizeClasses = {
-  sm: 'max-h-16 w-full max-w-[16rem]',
-  md: 'max-h-20 w-full max-w-[22rem]',
-  lg: 'max-h-24 w-full max-w-[28rem]',
-  xl: 'max-h-28 w-full max-w-[32rem]',
+  sm: 'max-h-12 w-auto max-w-[11rem]',
+  md: 'max-h-14 w-auto max-w-[14rem]',
+  lg: 'max-h-20 w-auto max-w-[18rem]',
+  xl: 'max-h-24 w-auto max-w-[22rem]',
 } as const
 
-const headerSizeClasses = 'max-h-10 w-auto max-w-[14rem]'
+const headerSizeClasses = 'max-h-11 w-auto max-w-[10rem] sm:max-w-[12rem]'
 
 const compactNameClasses = {
   sm: 'text-base',

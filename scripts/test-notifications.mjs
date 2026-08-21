@@ -61,9 +61,9 @@ if (!resendKey || resendKey.includes('placeholder')) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: `Demo Assistente Administrativo <${resendFrom}>`,
+      from: `Clínica de Beleza Mariana Oliveira <${resendFrom}>`,
       to: [testEmail],
-      subject: 'Teste Demo Assistente Administrativo — Resend OK',
+      subject: 'Teste Clínica Mariana Oliveira — Resend OK',
       html: '<p>Se você recebeu este e-mail, o Resend está funcionando.</p>',
     }),
   })

@@ -3,6 +3,7 @@ import { getPublicProfessionalBySlug } from '@/features/public-booking/actions'
 import { PublicBookingForm } from '@/features/public-booking/public-booking-form'
 import { PublicProfessionalPicker } from '@/features/public-booking/public-professional-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BackButton } from '@/components/layout/back-button'
 import { APP_NAME } from '@/lib/brand'
 
 type Props = {
@@ -16,6 +17,8 @@ export default async function PublicBookingPage({ params }: Props) {
   return (
     <div className="bg-secondary/30 min-h-screen px-4 py-8">
       <div className="mx-auto max-w-lg space-y-6">
+        <BackButton href="/" label="Voltar ao início" className="-ml-2" />
+
         <div className="text-center">
           <p className="text-muted-foreground text-sm">{APP_NAME}</p>
           <h1 className="mt-1 text-2xl font-semibold">{professional.name}</h1>

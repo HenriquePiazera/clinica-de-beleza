@@ -1,11 +1,11 @@
 {
-  "name": "Demo Assistente Administrativo",
-  "short_name": "Assistente Admin",
-  "description": "Agenda e atendimento para clínicas, salões e profissionais",
+  "name": "Clínica de Beleza Mariana Oliveira",
+  "short_name": "Mariana Oliveira",
+  "description": "Estética, beleza e bem-estar — agenda e atendimento",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2060e0",
+  "background_color": "#1a1214",
+  "theme_color": "#b76e79",
   "icons": [
     {
       "src": "/icon.svg",

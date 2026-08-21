@@ -1,12 +1,42 @@
-export const APP_NAME = 'Demo Assistente Administrativo'
+export const APP_NAME = 'Clínica de Beleza Mariana Oliveira'
 
-export const APP_TAGLINE =
-  'Agenda e atendimento para clínicas, salões e profissionais'
+export const APP_TAGLINE = 'Estética • Beleza • Bem-estar'
 
 export const APP_SLOGAN =
-  'Organize clientes, agenda e histórico em um só lugar'
+  'Cuidado personalizado em estética, beleza e bem-estar'
 
-export const APP_LOGO_PATH = '/demo-assistente-logo.svg?v=1'
+export const APP_PRESENTATION =
+  'Um espaço acolhedor para cuidar da sua pele, sobrancelhas e unhas, com atendimento individual e agenda organizada para cada profissional.'
+
+export const APP_LOGO_PATH = '/logo-clinica-mariana-oliveira.png?v=1'
+
+/** Diferenciais exibidos na landing (texto editorial). */
+export const APP_DIFFERENTIALS = [
+  {
+    title: 'Atendimento personalizado',
+    description:
+      'Cada profissional com sua agenda e foco no seu momento de cuidado.',
+  },
+  {
+    title: 'Equipe especializada',
+    description:
+      'Estética, sobrancelhas e manicure/pedicure em um só lugar.',
+  },
+  {
+    title: 'Agenda prática',
+    description:
+      'Agende online com praticidade e receba lembretes no momento certo.',
+  },
+] as const
+
+/** Contato exibido na landing (ajuste quando o cliente enviar os dados reais). */
+export const APP_CONTACT = {
+  whatsappDisplay: '(11) 90000-0000',
+  whatsappLink: 'https://wa.me/5511900000000',
+  instagram: '@clinicamarianaoliveira',
+  instagramLink: 'https://instagram.com/clinicamarianaoliveira',
+  address: 'São Paulo, SP — endereço a confirmar',
+} as const
 
 /** Classes Tailwind/CSS compartilhadas — identidade visual do app */
 export const BRAND = {
