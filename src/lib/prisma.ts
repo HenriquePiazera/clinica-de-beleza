@@ -31,8 +31,21 @@ function createPrismaClient() {
   return new PrismaClient({ adapter })
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+function getPrismaClient(): PrismaClient {
+  const existing = globalForPrisma.prisma
+  // Após `prisma generate`, o HMR pode manter um client antigo sem modelos novos.
+  if (
+    existing &&
+    typeof (existing as { clinicReview?: unknown }).clinicReview === 'undefined'
+  ) {
+    globalForPrisma.prisma = undefined
+  }
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
+  const client = globalForPrisma.prisma ?? createPrismaClient()
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client
+  }
+  return client
 }
+
+export const prisma = getPrismaClient()

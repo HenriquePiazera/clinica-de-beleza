@@ -57,7 +57,7 @@ export function DashboardHeaderActions({
         size="sm"
         className={linkClass(onDark, feedbackActive)}
       >
-        <Link href="/feedback">Feedback</Link>
+        <Link href="/feedback">Depoimentos</Link>
       </Button>
       <Button
         asChild

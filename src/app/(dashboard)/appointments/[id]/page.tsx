@@ -16,14 +16,24 @@ import {
   getAppointmentAction,
   updateAppointmentAction,
   cancelAppointmentAction,
+  deleteAppointmentAction,
 } from '@/features/appointments/actions'
 import { listClientsAction } from '@/features/clients/actions'
 import { toDatetimeLocalValue, getMinDatetimeLocalValue } from '@/lib/datetime'
 import {
+  isPastAppointmentStart,
+  needsConfirmationFollowUp,
+  PAST_APPOINTMENT_STATUSES,
+} from '@/lib/appointment-status'
+import {
   APPOINTMENT_STATUS_LABELS,
   selectFieldClassName,
 } from '@/lib/labels'
-import { getAppointmentStatusBadgeVariant } from '@/lib/status-badges'
+import {
+  appointmentCardClassName,
+  getAppointmentStatusBadgeVariant,
+} from '@/lib/status-badges'
+import { CardStatusAlert } from '@/components/lists/card-status-alert'
 
 export default async function AppointmentDetailPage({
   params,
@@ -37,7 +47,29 @@ export default async function AppointmentDetailPage({
 
   const clients = await listClientsAction()
   const minDatetime = getMinDatetimeLocalValue()
+  const startIsFuture =
+    new Date(appointment.start_time).getTime() > Date.now()
+  // Em edição, `min` no datetime-local impede salvar status em horários passados
+  // (o browser bloqueia o submit e rola até o campo de data).
+  const dateMin = startIsFuture ? minDatetime : undefined
+  const appointmentIsPast = isPastAppointmentStart(appointment.start_time)
+  const statusOptions = appointmentIsPast
+    ? Object.entries(APPOINTMENT_STATUS_LABELS).filter(([value]) =>
+        (PAST_APPOINTMENT_STATUSES as readonly string[]).includes(value)
+      )
+    : Object.entries(APPOINTMENT_STATUS_LABELS)
+  const statusDefault =
+    appointmentIsPast &&
+    !(PAST_APPOINTMENT_STATUSES as readonly string[]).includes(
+      appointment.status
+    )
+      ? 'completed'
+      : appointment.status
   const isCanceled = appointment.status === 'canceled'
+  const needsConfirm = needsConfirmationFollowUp(
+    appointment.status,
+    appointment.start_time
+  )
   const formKey = formKeyFromSearchParams(searchParams)
   const errorMessage = searchParams.error
     ? decodeURIComponent(searchParams.error)
@@ -58,6 +90,12 @@ export default async function AppointmentDetailPage({
     refreshAndRedirect('/appointments')
   }
 
+  async function handleDelete() {
+    'use server'
+    await deleteAppointmentAction(params.id)
+    refreshAndRedirect('/appointments')
+  }
+
   return (
     <div>
       <PageHeader
@@ -66,7 +104,11 @@ export default async function AppointmentDetailPage({
         backHref="/appointments"
       />
       <FormErrorBanner message={errorMessage} />
-      <Card className="mb-6">
+      <Card
+        className={`mb-6 ${appointmentCardClassName(appointment.status, {
+          alert: needsConfirm,
+        })}`}
+      >
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground text-sm">Status atual</span>
@@ -76,10 +118,17 @@ export default async function AppointmentDetailPage({
             </Badge>
           </div>
 
+          {needsConfirm ? (
+            <CardStatusAlert>
+              Confirmação pendente: entre em contato com a cliente e altere o
+              status para Confirmado, Cancelado ou Excluir o agendamento.
+            </CardStatusAlert>
+          ) : null}
+
           {isCanceled ? (
             <p className="text-muted-foreground text-sm">
-              Agendamento cancelado. Altere o status abaixo para reativar, se
-              necessário.
+              Agendamento cancelado. Ele entra na fila do Histórico e do
+              Financeiro até você concluir as anotações e a baixa.
             </p>
           ) : null}
 
@@ -107,7 +156,7 @@ export default async function AppointmentDetailPage({
                 name="start_time"
                 type="datetime-local"
                 required
-                min={minDatetime}
+                min={dateMin}
                 defaultValue={toDatetimeLocalValue(appointment.start_time)}
                 className="min-h-11"
               />
@@ -119,7 +168,7 @@ export default async function AppointmentDetailPage({
                 name="end_time"
                 type="datetime-local"
                 required
-                min={minDatetime}
+                min={dateMin}
                 defaultValue={toDatetimeLocalValue(appointment.end_time)}
                 className="min-h-11"
               />
@@ -143,15 +192,21 @@ export default async function AppointmentDetailPage({
               <select
                 id="status"
                 name="status"
-                defaultValue={appointment.status}
+                defaultValue={statusDefault}
                 className={selectFieldClassName}
               >
-                {Object.entries(APPOINTMENT_STATUS_LABELS).map(([value, label]) => (
+                {statusOptions.map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
               </select>
+              {appointmentIsPast ? (
+                <p className="text-muted-foreground text-xs">
+                  Data passada: use Realizado, Cancelado ou Excluir o
+                  agendamento.
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Observações</Label>
@@ -171,14 +226,23 @@ export default async function AppointmentDetailPage({
         </CardContent>
       </Card>
 
-      {!isCanceled ? (
+      <div className="space-y-3">
+        {!isCanceled ? (
+          <DestructiveActionButton
+            action={handleCancel}
+            buttonLabel="Cancelar agendamento"
+            title="Cancelar agendamento?"
+            description="O horário ficará marcado como cancelado na agenda. Você pode reativar alterando o status depois."
+            variant="outline"
+          />
+        ) : null}
         <DestructiveActionButton
-          action={handleCancel}
-          buttonLabel="Cancelar agendamento"
-          title="Cancelar agendamento?"
-          description="O horário ficará marcado como cancelado na agenda. Você pode reativar alterando o status depois."
+          action={handleDelete}
+          buttonLabel="Excluir agendamento"
+          title="Excluir agendamento?"
+          description="Esta ação remove o agendamento de forma permanente. Históricos de atendimento ligados a ele também serão removidos."
         />
-      ) : null}
+      </div>
     </div>
   )
 }

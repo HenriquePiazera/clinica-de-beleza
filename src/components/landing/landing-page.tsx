@@ -197,6 +197,56 @@ export function LandingPage({ isLoggedIn = false, clinic }: LandingPageProps) {
           </div>
         </section>
 
+        {/* Depoimentos — mesmo fundo da página, sem alterar o bloco branco dos diferenciais */}
+        <section className="mx-auto max-w-5xl px-4 py-16">
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight">
+              O que dizem nossas clientes
+            </h2>
+            <p className="mt-2 text-sm text-[#7a5a60]">
+              Depoimentos reais, publicados com autorização.
+            </p>
+          </div>
+
+          {(clinic.reviews ?? []).length > 0 ? (
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {(clinic.reviews ?? []).map((review) => (
+                <li
+                  key={review.id}
+                  className="flex flex-col rounded-2xl border border-[#e0d0c8] bg-white p-5 shadow-sm"
+                >
+                  <p
+                    className="text-[#c9a07a]"
+                    aria-label={`${review.rating} de 5 estrelas`}
+                  >
+                    {'★'.repeat(review.rating)}
+                    <span className="text-[#e0d0c8]">
+                      {'★'.repeat(5 - review.rating)}
+                    </span>
+                  </p>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-[#3d1f24]">
+                    “{review.message}”
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-[#b76e79]">
+                    {review.author_name}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <div className="mt-10 flex justify-center">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="min-h-11 border-[#b76e79]/40 text-[#3d1f24]"
+            >
+              <Link href="/avaliar">Deixar depoimento</Link>
+            </Button>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="mx-auto max-w-5xl px-4 py-16 text-center">
           <h2 className="text-2xl font-semibold tracking-tight">

@@ -13,6 +13,7 @@ import {
   type ActionResult,
 } from '@/lib/session'
 import { clientSchema } from '@/schemas/client.schema'
+import { getTeamMemberIds } from '@/lib/team'
 
 export type ClientDTO = {
   id: string
@@ -26,13 +27,13 @@ export type ClientDTO = {
 async function toClientDTO(
   client: {
     id: string
+    user_id: string
     name: string
     phone: string
     email: string | null
     birth_date: Date | null
     notes: string | null
-  },
-  userId: string
+  }
 ): Promise<ClientDTO> {
   return {
     id: client.id,
@@ -40,26 +41,30 @@ async function toClientDTO(
     phone: client.phone,
     email: client.email,
     birth_date: client.birth_date?.toISOString().split('T')[0] ?? null,
-    notes: client.notes ? await decryptField(client.notes, userId) : null,
+    notes: client.notes
+      ? await decryptField(client.notes, client.user_id)
+      : null,
   }
 }
 
 export async function listClientsAction(): Promise<ClientDTO[]> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const clients = await prisma.client.findMany({
-    where: { user_id: userId },
+    where: { user_id: { in: userIds } },
     orderBy: { name: 'asc' },
   })
-  return Promise.all(clients.map((c) => toClientDTO(c, userId)))
+  return Promise.all(clients.map((c) => toClientDTO(c)))
 }
 
 export async function getClientAction(id: string): Promise<ClientDTO | null> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const client = await prisma.client.findFirst({
-    where: { id, user_id: userId },
+    where: { id, user_id: { in: userIds } },
   })
   if (!client) return null
-  return toClientDTO(client, userId)
+  return toClientDTO(client)
 }
 
 export async function createClientAction(

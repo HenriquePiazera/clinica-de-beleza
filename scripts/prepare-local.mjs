@@ -21,30 +21,54 @@ export const LOCAL_DB_NAME = 'clinica-de-beleza'
 
 /** Fallback se ainda não soubermos a porta do `prisma dev`. */
 export const LOCAL_DATABASE_URL_FALLBACK =
-  'postgres://postgres:postgres@127.0.0.1:51214/template1' +
-  '?sslmode=disable&connection_limit=10&connect_timeout=0' +
-  '&max_idle_connection_lifetime=0&pool_timeout=0&socket_timeout=0'
+  'postgres://postgres:postgres@127.0.0.1:51214/template1?sslmode=disable'
 
 const OWNER_EMAIL = 'mariana@clinica-mariana.local'
 const OWNER_PASSWORD = 'beleza1234'
 
+/**
+ * Prisma CLI (db push) rejeita args de pool do driver `pg` → P1013.
+ * Localmente use só sslmode=disable.
+ */
 function withPoolParams(url) {
   if (!url) return url
-  if (url.includes('connection_limit=')) return url
-  const sep = url.includes('?') ? '&' : '?'
-  return (
-    url +
-    `${sep}connection_limit=10&connect_timeout=0` +
-    `&max_idle_connection_lifetime=0&pool_timeout=0&socket_timeout=0`
+  const clean = sanitizeDatabaseUrl(url)
+  if (!clean) return url
+  return `${clean.split('?')[0]}?sslmode=disable`
+}
+
+/** Remove hiperlinks OSC-8 / ANSI que o `prisma dev ls` injeta no stdout. */
+function stripTerminalDecorations(text) {
+  return String(text)
+    .replace(/\u001b\]8;;([^\u0007]*)\u0007/g, '$1')
+    .replace(/\u001b\[[0-9;]*m/g, '')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
+}
+
+function sanitizeDatabaseUrl(url) {
+  if (!url) return null
+  const cleaned = stripTerminalDecorations(url).trim()
+  const match = cleaned.match(
+    /^(postgres(?:ql)?:\/\/[^\s"'<>]+)/i
   )
+  if (!match) return null
+  return match[1].replace(/[.,;]+$/, '')
 }
 
 function extractPostgresUrl(text) {
   if (!text) return null
-  const match = text.match(
+  const plain = stripTerminalDecorations(text)
+
+  // Preferir TCP direto (postgres://), não prisma+postgres://
+  const tcp = plain.match(
     /postgres(?:ql)?:\/\/postgres:postgres@[^\s"'<>]+/i
   )
-  return match ? withPoolParams(match[0].replace(/[.,;]+$/, '')) : null
+  if (tcp) {
+    return withPoolParams(sanitizeDatabaseUrl(tcp[0]))
+  }
+
+  const any = plain.match(/postgres(?:ql)?:\/\/[^\s"'<>]+/i)
+  return any ? withPoolParams(sanitizeDatabaseUrl(any[0])) : null
 }
 
 function isLocalPrismaUrl(url) {
@@ -138,6 +162,11 @@ export function ensureLocalEnv() {
   const existing = loadEnvFile(envPath)
   const example = loadEnvFile(examplePath)
   const map = { ...example, ...existing }
+
+  if (map.DATABASE_URL) {
+    const cleaned = sanitizeDatabaseUrl(map.DATABASE_URL)
+    if (cleaned) map.DATABASE_URL = cleaned
+  }
 
   // Remove restos de plataformas externas
   for (const key of Object.keys(map)) {
@@ -292,7 +321,11 @@ function readLocalDbUrlFromLs() {
 
 function persistDatabaseUrl(url) {
   const map = loadEnvFile(envPath)
-  map.DATABASE_URL = withPoolParams(url)
+  const clean = withPoolParams(sanitizeDatabaseUrl(url) || url)
+  if (!clean || !/^postgres(?:ql)?:\/\//i.test(clean)) {
+    throw new Error(`DATABASE_URL inválida após sanitização: ${String(url).slice(0, 80)}`)
+  }
+  map.DATABASE_URL = clean
   writeFileSync(envPath, serializeEnv(map), 'utf8')
   process.env.DATABASE_URL = map.DATABASE_URL
   return map.DATABASE_URL
@@ -349,6 +382,15 @@ export async function ensureLocalPostgres() {
 }
 
 export function syncSchemaAndSeed(useLocalDb = true) {
+  // Garante que o Prisma CLI use a URL limpa do .env (não lixo de hiperlink no process.env).
+  const map = loadEnvFile(envPath)
+  if (map.DATABASE_URL) {
+    const cleaned = withPoolParams(sanitizeDatabaseUrl(map.DATABASE_URL) || map.DATABASE_URL)
+    if (cleaned) {
+      process.env.DATABASE_URL = cleaned
+    }
+  }
+
   console.log('→ prisma generate...')
   execSync('npx prisma generate', { cwd: root, stdio: 'inherit', env: process.env })
   console.log('→ prisma db push...')

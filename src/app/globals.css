@@ -177,10 +177,10 @@
     --destructive-foreground: var(--brand-white);
     --success: #6b8f71;
     --success-foreground: var(--brand-white);
-    --warning: var(--brand-gold);
-    --warning-foreground: var(--brand-burgundy);
-    --info: var(--brand-gold);
-    --info-foreground: var(--brand-burgundy);
+    --warning: #e08a3c;
+    --warning-foreground: #3d1f24;
+    --info: #5b8fb8;
+    --info-foreground: var(--brand-white);
     --border: #e0d0c8;
     --input: #e0d0c8;
     --ring: var(--brand-rose);
@@ -216,10 +216,10 @@
     --destructive-foreground: var(--brand-white);
     --success: #6b8f71;
     --success-foreground: var(--brand-white);
-    --warning: var(--brand-gold);
+    --warning: #e08a3c;
     --warning-foreground: var(--brand-burgundy-deep);
-    --info: var(--brand-gold);
-    --info-foreground: var(--brand-burgundy-deep);
+    --info: #5b8fb8;
+    --info-foreground: var(--brand-white);
     --border: #523038;
     --input: #523038;
     --ring: var(--brand-gold);
@@ -239,5 +239,12 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-alert-pulse,
+  .animate-alert-banner-blink {
+    animation: none !important;
   }
 }

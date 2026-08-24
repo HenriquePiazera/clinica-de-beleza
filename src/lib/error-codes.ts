@@ -35,6 +35,11 @@ export const ERROR_CODES = {
   RECEIPT_NOT_PAID: 'Só é possível emitir recibo de pagamentos com status pago.',
   APPOINTMENT_PAST_DATE:
     'Não é possível agendar em data ou horário passado.',
+  APPOINTMENT_PAST_STATUS_INVALID:
+    'Atendimentos com data passada só podem ficar como Realizado ou Cancelado (ou ser excluídos).',
+  REVIEW_NOT_FOUND: 'Depoimento não encontrado.',
+  REVIEW_RATE_LIMIT:
+    'Muitos envios em pouco tempo. Aguarde um momento e tente de novo.',
 } as const
 
 export type ErrorCode = keyof typeof ERROR_CODES

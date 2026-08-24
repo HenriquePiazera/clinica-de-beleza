@@ -1,15 +1,18 @@
 import { PageHeader } from '@/components/layout/page-header'
-import { FeedbackForm } from '@/features/feedback/feedback-form'
+import { listClinicReviewsAction } from '@/features/clinic-reviews/actions'
+import { ClinicReviewsModeration } from '@/features/clinic-reviews/clinic-reviews-moderation'
 
-export default function FeedbackPage() {
+export default async function FeedbackPage() {
+  const reviews = await listClinicReviewsAction()
+
   return (
     <div>
       <PageHeader
-        title="Feedback"
-        description="Ajude-nos a melhorar"
+        title="Depoimentos"
+        description="Modere avaliações das clientes e escolha o que aparece na landing"
         backHref="/dashboard"
       />
-      <FeedbackForm />
+      <ClinicReviewsModeration reviews={reviews} />
     </div>
   )
 }

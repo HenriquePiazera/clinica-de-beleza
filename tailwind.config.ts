@@ -78,6 +78,34 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      keyframes: {
+        'alert-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 0 0 rgba(224, 138, 60, 0.85)',
+            backgroundColor: 'rgba(224, 138, 60, 0.22)',
+            borderColor: 'rgba(224, 138, 60, 1)',
+          },
+          '50%': {
+            boxShadow: '0 0 0 6px rgba(224, 138, 60, 0)',
+            backgroundColor: 'rgba(224, 138, 60, 0.48)',
+            borderColor: 'rgba(255, 170, 60, 1)',
+          },
+        },
+        'alert-banner-blink': {
+          '0%, 100%': {
+            opacity: '1',
+            backgroundColor: 'rgba(224, 138, 60, 0.55)',
+          },
+          '50%': {
+            opacity: '0.72',
+            backgroundColor: 'rgba(255, 176, 70, 0.9)',
+          },
+        },
+      },
+      animation: {
+        'alert-pulse': 'alert-pulse 1.2s ease-in-out infinite',
+        'alert-banner-blink': 'alert-banner-blink 1s ease-in-out infinite',
+      },
     },
   },
   plugins: [tailwindcssAnimate],

@@ -74,6 +74,12 @@ enum FeedbackStatus {
   archived
 }
 
+enum ClinicReviewStatus {
+  pending
+  published
+  archived
+}
+
 enum CashFlowType {
   receivable
   expense
@@ -150,6 +156,23 @@ model UserFeedback {
   @@index([status])
   @@index([created_at])
   @@map("user_feedbacks")
+}
+
+model ClinicReview {
+  id              String             @id @default(cuid())
+  author_name     String
+  rating          Int
+  message         String
+  allow_publish   Boolean            @default(true)
+  show_on_landing Boolean            @default(false)
+  status          ClinicReviewStatus @default(pending)
+  moderated_by    String?
+  moderated_at    DateTime?
+  created_at      DateTime           @default(now())
+
+  @@index([show_on_landing, status])
+  @@index([status, created_at])
+  @@map("clinic_reviews")
 }
 
 model Service {
@@ -294,6 +317,9 @@ model Payment {
   user_id        String
   amount         Decimal       @db.Decimal(10, 2)
   payment_method PaymentMethod
+  /// Partes do pagamento quando há mais de um método: [{ method, amount }]
+  method_splits  Json?
+  notes          String?
   status         PaymentStatus @default(pending)
   paid_at        DateTime?
   receipt_number Int?

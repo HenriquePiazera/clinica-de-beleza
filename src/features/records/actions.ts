@@ -12,6 +12,7 @@ import {
   type ActionResult,
 } from '@/lib/session'
 import { serviceRecordSchema } from '@/schemas/record.schema'
+import { getTeamMemberIds } from '@/lib/team'
 
 export type ServiceRecordDTO = {
   id: string
@@ -27,8 +28,9 @@ export async function getRecordAction(
   id: string
 ): Promise<ServiceRecordDTO | null> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const record = await prisma.serviceRecord.findFirst({
-    where: { id, user_id: userId },
+    where: { id, user_id: { in: userIds } },
     include: { client: { select: { name: true } } },
   })
 
@@ -39,9 +41,9 @@ export async function getRecordAction(
     appointment_id: record.appointment_id,
     client_id: record.client_id,
     client_name: record.client.name,
-    description: await decryptField(record.description, userId),
+    description: await decryptField(record.description, record.user_id),
     evolution: record.evolution
-      ? await decryptField(record.evolution, userId)
+      ? await decryptField(record.evolution, record.user_id)
       : null,
     created_at: record.created_at.toISOString(),
   }
@@ -49,8 +51,9 @@ export async function getRecordAction(
 
 export async function listRecordsAction(): Promise<ServiceRecordDTO[]> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const records = await prisma.serviceRecord.findMany({
-    where: { user_id: userId },
+    where: { user_id: { in: userIds } },
     include: { client: { select: { name: true } } },
     orderBy: { created_at: 'desc' },
   })
@@ -61,9 +64,9 @@ export async function listRecordsAction(): Promise<ServiceRecordDTO[]> {
       appointment_id: r.appointment_id,
       client_id: r.client_id,
       client_name: r.client.name,
-      description: await decryptField(r.description, userId),
+      description: await decryptField(r.description, r.user_id),
       evolution: r.evolution
-        ? await decryptField(r.evolution, userId)
+        ? await decryptField(r.evolution, r.user_id)
         : null,
       created_at: r.created_at.toISOString(),
     }))
@@ -83,23 +86,25 @@ export async function createRecordAction(
 
   if (!parsed.success) return actionError('INVALID_INPUT')
 
+  const userIds = await getTeamMemberIds(userId)
   const appointment = await prisma.appointment.findFirst({
     where: {
       id: parsed.data.appointment_id,
-      user_id: userId,
+      user_id: { in: userIds },
       client_id: parsed.data.client_id,
     },
   })
   if (!appointment) return actionError('APPOINTMENT_NOT_FOUND')
 
-  const description = await encryptField(parsed.data.description, userId)
+  const ownerId = appointment.user_id
+  const description = await encryptField(parsed.data.description, ownerId)
   const evolution = parsed.data.evolution
-    ? await encryptField(parsed.data.evolution, userId)
+    ? await encryptField(parsed.data.evolution, ownerId)
     : null
 
   const record = await prisma.serviceRecord.create({
     data: {
-      user_id: userId,
+      user_id: ownerId,
       appointment_id: parsed.data.appointment_id,
       client_id: parsed.data.client_id,
       description,
@@ -117,6 +122,7 @@ export async function createRecordAction(
   })
 
   revalidatePath('/records')
+  revalidatePath('/payments')
   return { success: true, data: { id: record.id } }
 }
 
@@ -125,8 +131,9 @@ export async function updateRecordAction(
   formData: FormData
 ): Promise<ActionResult> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const existing = await prisma.serviceRecord.findFirst({
-    where: { id, user_id: userId },
+    where: { id, user_id: { in: userIds } },
   })
   if (!existing) return actionError('RECORD_NOT_FOUND')
 
@@ -142,15 +149,16 @@ export async function updateRecordAction(
   const appointment = await prisma.appointment.findFirst({
     where: {
       id: parsed.data.appointment_id,
-      user_id: userId,
+      user_id: { in: userIds },
       client_id: parsed.data.client_id,
     },
   })
   if (!appointment) return actionError('APPOINTMENT_NOT_FOUND')
 
-  const description = await encryptField(parsed.data.description, userId)
+  const ownerId = existing.user_id
+  const description = await encryptField(parsed.data.description, ownerId)
   const evolution = parsed.data.evolution
-    ? await encryptField(parsed.data.evolution, userId)
+    ? await encryptField(parsed.data.evolution, ownerId)
     : null
 
   await prisma.serviceRecord.update({
@@ -179,8 +187,9 @@ export async function updateRecordAction(
 
 export async function deleteRecordAction(id: string): Promise<ActionResult> {
   const userId = await requireUserId()
+  const userIds = await getTeamMemberIds(userId)
   const existing = await prisma.serviceRecord.findFirst({
-    where: { id, user_id: userId },
+    where: { id, user_id: { in: userIds } },
   })
   if (!existing) return actionError('RECORD_NOT_FOUND')
 

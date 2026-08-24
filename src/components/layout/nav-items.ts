@@ -23,7 +23,7 @@ export const dashboardNavItems: NavItem[] = [
 ]
 
 export const secondaryNavItems: NavItem[] = [
-  { href: '/feedback', label: 'Feedback', icon: MessageSquare },
+  { href: '/feedback', label: 'Depoimentos', icon: MessageSquare },
 ]
 
 export const internalNavItem: NavItem = {

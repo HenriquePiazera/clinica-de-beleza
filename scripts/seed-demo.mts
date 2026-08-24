@@ -180,6 +180,68 @@ async function syncServices(userId: string, seed: ProfessionalSeed) {
   }
 }
 
+const landingReviews = [
+  {
+    author_name: 'Fernanda R.',
+    rating: 5,
+    message:
+      'A limpeza de pele com a Mariana deixou minha pele renovada. Atendimento cuidadoso e ambiente acolhedor.',
+  },
+  {
+    author_name: 'Patricia M.',
+    rating: 5,
+    message:
+      'Fiz design de sobrancelhas com a Camila e amei o resultado. Sai com o olhar bem marcado e natural.',
+  },
+  {
+    author_name: 'Juliana A.',
+    rating: 5,
+    message:
+      'Manicure impecável com a Juliana. Horário certo, higiene nota 10 e unhas lindas por semanas.',
+  },
+  {
+    author_name: 'Beatriz S.',
+    rating: 4,
+    message:
+      'Clínica organizada e profissionais atenciosas. Agendei online com facilidade e fui bem recebida.',
+  },
+  {
+    author_name: 'Camila T.',
+    rating: 5,
+    message:
+      'Voltei pela terceira vez. Sempre saio me sentindo cuidada. Recomendo de olhos fechados.',
+  },
+] as const
+
+async function seedLandingReviews(ownerId: string) {
+  const publishedCount = await prisma.clinicReview.count({
+    where: { show_on_landing: true, status: 'published' },
+  })
+  if (publishedCount > 0) {
+    console.log(
+      `Depoimentos na landing já existentes (${publishedCount}). Seed de reviews ignorado.`
+    )
+    return
+  }
+
+  const now = new Date()
+  for (const [index, review] of landingReviews.entries()) {
+    await prisma.clinicReview.create({
+      data: {
+        author_name: review.author_name,
+        rating: review.rating,
+        message: review.message,
+        allow_publish: true,
+        show_on_landing: true,
+        status: 'published',
+        moderated_by: ownerId,
+        moderated_at: new Date(now.getTime() - index * 60_000),
+      },
+    })
+  }
+  console.log(`${landingReviews.length} depoimentos fictícios publicados na landing.`)
+}
+
 async function main() {
   const ownerSeed = professionals[0]
   const owner = await ensureProfessional(ownerSeed, true)
@@ -236,6 +298,8 @@ async function main() {
       })
     }
   }
+
+  await seedLandingReviews(owner.id)
 
   console.log('Profissionais sincronizados:')
   for (const p of professionals) {

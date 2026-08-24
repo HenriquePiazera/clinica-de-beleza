@@ -40,6 +40,7 @@ export const authConfig = {
         nextUrl.pathname.startsWith('/demo/') ||
         nextUrl.pathname.startsWith('/p/') ||
         nextUrl.pathname.startsWith('/confirm/') ||
+        nextUrl.pathname.startsWith('/avaliar') ||
         publicPaths.some((path) => nextUrl.pathname.startsWith(path))
 
       if (isPublicPath) {
