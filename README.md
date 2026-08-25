@@ -2,6 +2,15 @@
 
 Sistema de agenda e atendimento da clínica (estética, beleza e bem-estar).
 
+## Documentação
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [docs/SISTEMA.md](docs/SISTEMA.md) | **Documentação completa do sistema** (uso + arquitetura) |
+| [docs/ENTREGA_CLIENTE.md](docs/ENTREGA_CLIENTE.md) | Escopo comercial e entrega |
+| [docs/CHECKLIST_DEPLOY_CLIENTE.md](docs/CHECKLIST_DEPLOY_CLIENTE.md) | Checklist de publicação |
+| [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md) | Deploy Vercel + Neon |
+
 ## Começar
 
 ```bash
@@ -58,8 +67,6 @@ Cobertura E2E: login (ok/erro), cadastro de cliente, novo agendamento, Configura
 2. Detalhes: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
 3. Env modelo: `.env.production.example`
 4. Segredos: `npm run deploy:secrets`
-
-Entrega / escopo: [docs/ENTREGA_CLIENTE.md](docs/ENTREGA_CLIENTE.md)
 
 ## Acessar pelo celular (mesmo Wi‑Fi)
 

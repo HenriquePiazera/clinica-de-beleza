@@ -68,6 +68,8 @@ Senha inicial do seed: `beleza1234` (trocar em produção).
 
 Passo a passo: [CHECKLIST_DEPLOY_CLIENTE.md](./CHECKLIST_DEPLOY_CLIENTE.md) · [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md)
 
+Documentação do sistema (uso e arquitetura): [SISTEMA.md](./SISTEMA.md)
+
 **Obrigatório em produção:** `DEMO_MODE=false`, `BILLING_ENABLED=false`, banco e segredos **novos**.
 
-Antes: `npm test` e `npm run build`. Segredos: `npm run deploy:secrets`.
+Antes: `npm run test` e `npm run build`. Segredos: `npm run deploy:secrets`.
