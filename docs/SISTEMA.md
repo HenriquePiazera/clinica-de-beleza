@@ -185,10 +185,13 @@ Lembrete WhatsApp: no card do agendamento, **Copiar lembrete** → colar no app.
 |-------|----------|
 | E-mail (Resend) | Agendamento / cancelamento / reagendamento (quando configurado) |
 | Web Push | Opcional (VAPID); cliente pode instalar PWA e autorizar |
+| SMS simulado | `MOCK_SMS_ENABLED=true` — grava sempre na caixa `/settings/notifications/sms` quando há telefone (custo R$ 0); paralelo ao e-mail/push |
 | Cron | `/api/cron/reminders` (protegido por `CRON_SECRET`) |
 | WhatsApp | Apenas texto copiado manualmente |
 
-Sem `RESEND_API_KEY` / domínio verificado, o envio de e-mail fica limitado (ex.: remetente de teste do Resend).
+Sem `RESEND_API_KEY` / domínio verificado, o envio de e-mail fica limitado (ex.: remetente de teste do Resend). Com SMS simulado ligado, o texto aparece na caixa de teste mesmo quando o e-mail envia.
+
+Canal principal retornado: **e-mail → push → SMS simulado → nenhum** (o SMS simulado ainda assim é gravado se estiver ativo).
 
 ---
 
@@ -221,6 +224,7 @@ src/
 - `ServiceRecord`, `Attachment`
 - `Payment` (`method_splits` JSON, `notes`)
 - `ClinicReview` (depoimentos da landing)
+- `MockSmsMessage` (SMS simulado / inbox de teste)
 - `UserFeedback` (legado NPS do produto SaaS — não é o fluxo da clínica)
 - `AuditLog`, tokens de reset, cash-flow interno, demo links
 

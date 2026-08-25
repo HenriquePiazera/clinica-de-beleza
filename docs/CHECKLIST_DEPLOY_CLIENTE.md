@@ -24,6 +24,7 @@ npx tsx scripts/seed-demo.mts
 - [ ] Importar repo → Framework Next.js → Node **22.x**
 - [ ] Colar variáveis de `.env.production.example` + segredos gerados
 - [ ] `DEMO_MODE=false` e `BILLING_ENABLED=false`
+- [ ] `MOCK_SMS_ENABLED=true` (SMS de teste na inbox)
 - [ ] `DATABASE_URL` = Neon **novo** (não local)
 - [ ] Deploy Production
 
@@ -35,6 +36,7 @@ npx tsx scripts/seed-demo.mts
 - [ ] Abrir agendamento (botão Agendar)
 - [ ] Login Mariana: `mariana@clinica-mariana.local` / `beleza1234`
 - [ ] Conferir equipe/fotos/serviços na landing
+- [ ] (Opcional) Abrir Configurações → Notificações → SMS de teste após um agendamento sem e-mail
 
 ## Enviar ao cliente
 

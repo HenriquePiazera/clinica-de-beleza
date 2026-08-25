@@ -52,11 +52,6 @@ export function getAppointmentStatusCardClass(status: string): string {
   }
 }
 
-/** Destaque laranja pulsante para alerta administrativo. */
-export function getAlertCardClass(): string {
-  return 'animate-alert-pulse border-2 border-warning bg-warning/40 ring-2 ring-warning shadow-[0_0_0_2px_rgba(224,138,60,0.35)]'
-}
-
 export function getPaymentStatusCardClass(status: string): string {
   switch (status) {
     case 'paid':
@@ -70,10 +65,6 @@ export function getPaymentStatusCardClass(status: string): string {
   }
 }
 
-export function appointmentCardClassName(
-  status: string,
-  options?: { alert?: boolean }
-): string {
-  if (options?.alert) return getAlertCardClass()
+export function appointmentCardClassName(status: string): string {
   return cn(getAppointmentStatusCardClass(status))
 }

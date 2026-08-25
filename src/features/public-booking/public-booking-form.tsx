@@ -125,6 +125,10 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
         setMessage(
           'Agendamento solicitado! Enviamos a confirmação por notificação no celular.'
         )
+      } else if (result.notificationChannel === 'mock_sms') {
+        setMessage(
+          'Agendamento solicitado! Confirme pelo link abaixo (SMS de teste gravado na clínica).'
+        )
       } else {
         const pushOk = await subscribeClientToPush({
           slug: selectedSlug,

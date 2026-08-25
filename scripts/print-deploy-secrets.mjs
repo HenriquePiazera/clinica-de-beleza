@@ -19,6 +19,7 @@ CRON_SECRET=${cron}
 
 BILLING_ENABLED=false
 DEMO_MODE=false
+MOCK_SMS_ENABLED=true
 
 PLATFORM_OWNER_EMAILS=mariana@clinica-mariana.local
 BETA_ALLOWED_EMAILS=mariana@clinica-mariana.local,camila@clinica-mariana.local,juliana@clinica-mariana.local

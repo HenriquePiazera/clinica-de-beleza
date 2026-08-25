@@ -22,7 +22,7 @@ import {
 } from '@/services/appointment-conflict.service'
 import { buildReminderMessage } from '@/services/reminder.service'
 import { sendAppointmentNotification } from '@/services/notification.service'
-import { getTeamMemberIds } from '@/lib/team'
+import { getAccessibleTeamUserIds, getTeamMemberIds } from '@/lib/team'
 import { randomBytes } from 'crypto'
 
 export type AppointmentDTO = {
@@ -103,7 +103,10 @@ export async function createAppointmentAction(
   if (!parsed.success) return actionError('INVALID_INPUT')
 
   const client = await prisma.client.findFirst({
-    where: { id: parsed.data.client_id, user_id: userId },
+    where: {
+      id: parsed.data.client_id,
+      user_id: { in: await getAccessibleTeamUserIds(userId) },
+    },
   })
   if (!client) return actionError('CLIENT_NOT_FOUND')
 
@@ -145,6 +148,14 @@ export async function createAppointmentAction(
     },
   })
 
+  const confirmationToken = randomBytes(32).toString('hex')
+  await prisma.appointmentConfirmation.create({
+    data: {
+      appointment_id: appointment.id,
+      token: confirmationToken,
+    },
+  })
+
   const hdrs = await headers()
   await logAudit({
     userId,
@@ -157,9 +168,13 @@ export async function createAppointmentAction(
   revalidatePath('/appointments')
 
   try {
-    await notifyClientAboutAppointment(appointment.id, 'scheduled')
-  } catch {
-    // Notificação não deve bloquear o agendamento
+    await notifyClientAboutAppointment(
+      appointment.id,
+      'scheduled',
+      confirmationToken
+    )
+  } catch (err) {
+    console.error('[notificação] falha ao notificar agendamento:', err)
   }
 
   return { success: true, data: { id: appointment.id } }
@@ -182,6 +197,7 @@ async function notifyClientAboutAppointment(
 
   await sendAppointmentNotification({
     type,
+    ownerUserId: appointment.user_id,
     appointment: {
       id: appointment.id,
       start_time: appointment.start_time,
@@ -193,6 +209,7 @@ async function notifyClientAboutAppointment(
       id: appointment.client.id,
       name: appointment.client.name,
       email: appointment.client.email,
+      phone: appointment.client.phone,
       push_subscription: appointment.client.push_subscription,
     },
     confirmationToken,
@@ -221,7 +238,10 @@ export async function updateAppointmentAction(
   if (!parsed.success) return actionError('INVALID_INPUT')
 
   const client = await prisma.client.findFirst({
-    where: { id: parsed.data.client_id, user_id: professionalId },
+    where: {
+      id: parsed.data.client_id,
+      user_id: { in: await getAccessibleTeamUserIds(userId) },
+    },
   })
   if (!client) return actionError('CLIENT_NOT_FOUND')
 
@@ -299,17 +319,13 @@ export async function updateAppointmentAction(
   revalidatePath('/payments')
 
   if (timeChanged && nextStatus !== 'canceled') {
-    let token: string | undefined
-    if (nextStatus === 'awaiting_confirmation') {
-      const confirmation = await prisma.appointmentConfirmation.create({
-        data: {
-          appointment_id: id,
-          token: randomBytes(32).toString('hex'),
-        },
-      })
-      token = confirmation.token
-    }
-    await notifyClientAboutAppointment(id, 'reschedule', token)
+    const confirmation = await prisma.appointmentConfirmation.create({
+      data: {
+        appointment_id: id,
+        token: randomBytes(32).toString('hex'),
+      },
+    })
+    await notifyClientAboutAppointment(id, 'reschedule', confirmation.token)
   }
 
   return { success: true }

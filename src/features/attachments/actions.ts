@@ -13,6 +13,7 @@ import {
   type ActionResult,
 } from '@/lib/session'
 import { uploadToStorage, deleteFromStorage } from '@/services/storage.service'
+import { getAccessibleTeamUserIds } from '@/lib/team'
 
 export type AttachmentDTO = {
   id: string
@@ -27,8 +28,9 @@ export async function listAttachmentsAction(
   clientId: string
 ): Promise<AttachmentDTO[]> {
   const userId = await requireUserId()
+  const userIds = await getAccessibleTeamUserIds(userId)
   const attachments = await prisma.attachment.findMany({
-    where: { client_id: clientId, user_id: userId },
+    where: { client_id: clientId, user_id: { in: userIds } },
     orderBy: { uploaded_at: 'desc' },
   })
 
@@ -54,7 +56,10 @@ export async function uploadAttachmentAction(
   }
 
   const client = await prisma.client.findFirst({
-    where: { id: clientId, user_id: userId },
+    where: {
+      id: clientId,
+      user_id: { in: await getAccessibleTeamUserIds(userId) },
+    },
   })
   if (!client) return actionError('CLIENT_NOT_FOUND')
 
@@ -115,12 +120,13 @@ export async function deleteAttachmentAction(
   id: string
 ): Promise<ActionResult> {
   const userId = await requireUserId()
+  const userIds = await getAccessibleTeamUserIds(userId)
   const attachment = await prisma.attachment.findFirst({
-    where: { id, user_id: userId },
+    where: { id, user_id: { in: userIds } },
   })
   if (!attachment) return actionError('INVALID_INPUT')
 
-  const path = await decryptField(attachment.file_url, userId)
+  const path = await decryptField(attachment.file_url, attachment.user_id)
 
   try {
     await deleteFromStorage(path)

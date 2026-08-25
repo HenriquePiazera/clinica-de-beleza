@@ -105,9 +105,7 @@ export default async function AppointmentDetailPage({
       />
       <FormErrorBanner message={errorMessage} />
       <Card
-        className={`mb-6 ${appointmentCardClassName(appointment.status, {
-          alert: needsConfirm,
-        })}`}
+        className={`mb-6 ${appointmentCardClassName(appointment.status)}`}
       >
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-center justify-between gap-2">

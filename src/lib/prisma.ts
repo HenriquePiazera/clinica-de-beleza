@@ -36,7 +36,10 @@ function getPrismaClient(): PrismaClient {
   // Após `prisma generate`, o HMR pode manter um client antigo sem modelos novos.
   if (
     existing &&
-    typeof (existing as { clinicReview?: unknown }).clinicReview === 'undefined'
+    (typeof (existing as { clinicReview?: unknown }).clinicReview ===
+      'undefined' ||
+      typeof (existing as { mockSmsMessage?: unknown }).mockSmsMessage ===
+        'undefined')
   ) {
     globalForPrisma.prisma = undefined
   }

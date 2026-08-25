@@ -12,7 +12,7 @@ import {
   type ActionResult,
 } from '@/lib/session'
 import { serviceRecordSchema } from '@/schemas/record.schema'
-import { getTeamMemberIds } from '@/lib/team'
+import { getAccessibleTeamUserIds } from '@/lib/team'
 
 export type ServiceRecordDTO = {
   id: string
@@ -28,7 +28,7 @@ export async function getRecordAction(
   id: string
 ): Promise<ServiceRecordDTO | null> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const record = await prisma.serviceRecord.findFirst({
     where: { id, user_id: { in: userIds } },
     include: { client: { select: { name: true } } },
@@ -51,7 +51,7 @@ export async function getRecordAction(
 
 export async function listRecordsAction(): Promise<ServiceRecordDTO[]> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const records = await prisma.serviceRecord.findMany({
     where: { user_id: { in: userIds } },
     include: { client: { select: { name: true } } },
@@ -86,7 +86,7 @@ export async function createRecordAction(
 
   if (!parsed.success) return actionError('INVALID_INPUT')
 
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const appointment = await prisma.appointment.findFirst({
     where: {
       id: parsed.data.appointment_id,
@@ -131,7 +131,7 @@ export async function updateRecordAction(
   formData: FormData
 ): Promise<ActionResult> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const existing = await prisma.serviceRecord.findFirst({
     where: { id, user_id: { in: userIds } },
   })
@@ -187,7 +187,7 @@ export async function updateRecordAction(
 
 export async function deleteRecordAction(id: string): Promise<ActionResult> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const existing = await prisma.serviceRecord.findFirst({
     where: { id, user_id: { in: userIds } },
   })

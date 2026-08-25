@@ -136,6 +136,7 @@ model User {
   services              Service[]
   availabilities        Availability[]
   cash_flow_entries     CashFlowEntry[]
+  mock_sms_messages     MockSmsMessage[]
 
   @@map("users")
 }
@@ -227,6 +228,7 @@ model Client {
   service_records ServiceRecord[]
   attachments     Attachment[]
   payments        Payment[]
+  mock_sms_messages MockSmsMessage[]
 
   @@index([user_id])
   @@map("clients")
@@ -397,6 +399,24 @@ model CashFlowEntry {
   @@index([user_id, entry_date])
   @@index([user_id, type])
   @@map("cash_flow_entries")
+}
+
+/** SMS simulado (custo R$ 0) — não envia para operadora; só inbox no painel. */
+model MockSmsMessage {
+  id                 String   @id @default(cuid())
+  user_id            String
+  client_id          String?
+  appointment_id     String?
+  to_phone           String
+  body               String
+  notification_type  String
+  created_at         DateTime @default(now())
+
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [client_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, created_at])
+  @@map("mock_sms_messages")
 }
 
 /** Link de demonstração com janela de uso limitada (ex.: 2h a partir do 1º acesso). */

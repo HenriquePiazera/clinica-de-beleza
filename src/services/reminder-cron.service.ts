@@ -76,6 +76,7 @@ export async function processReminderNotifications(): Promise<{
       id: appointment.client.id,
       name: appointment.client.name,
       email: appointment.client.email,
+      phone: appointment.client.phone,
       push_subscription: appointment.client.push_subscription,
     }
 
@@ -93,6 +94,7 @@ export async function processReminderNotifications(): Promise<{
       if (isAppointmentInReminderWindow(appointment.start_time, hoursBefore, now)) {
         const result = await sendAppointmentNotification({
           type: 'reminder',
+          ownerUserId: appointment.user_id,
           appointment: appointmentInfo,
           client: clientInfo,
           confirmationToken: pendingToken,
@@ -128,6 +130,7 @@ export async function processReminderNotifications(): Promise<{
       ) {
         const result = await sendAppointmentNotification({
           type: 'confirmation',
+          ownerUserId: appointment.user_id,
           appointment: appointmentInfo,
           client: clientInfo,
           confirmationToken: pendingToken,

@@ -1,3 +1,4 @@
+import { TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -5,17 +6,19 @@ type Props = {
   className?: string
 }
 
-/** Alerta visual laranja piscante (confirmação / fila atrasada). */
+/** Alerta administrativo no card (ícone + texto; sem borda piscante). */
 export function CardStatusAlert({ children, className }: Props) {
   return (
-    <p
+    <div
       role="alert"
-      className={cn(
-        'animate-alert-banner-blink rounded-md border-2 border-warning bg-warning/70 px-3 py-2.5 text-sm font-semibold text-warning-foreground shadow-sm',
-        className
-      )}
+      className={cn('flex items-start gap-2.5 text-sm text-warning', className)}
     >
-      {children}
-    </p>
+      <TriangleAlert
+        className="mt-0.5 size-5 shrink-0"
+        aria-hidden
+        strokeWidth={2.25}
+      />
+      <p className="font-medium leading-snug text-foreground">{children}</p>
+    </div>
   )
 }

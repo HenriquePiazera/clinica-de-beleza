@@ -241,10 +241,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-alert-pulse,
-  .animate-alert-banner-blink {
-    animation: none !important;
-  }
-}

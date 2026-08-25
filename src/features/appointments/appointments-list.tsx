@@ -79,11 +79,7 @@ export function AppointmentsList({ appointments }: Props) {
             return (
               <li key={appt.id}>
                 <Card
-                  className={cn(
-                    appointmentCardClassName(appt.status, {
-                      alert: needsConfirm,
-                    })
-                  )}
+                  className={cn(appointmentCardClassName(appt.status))}
                 >
                   <CardContent className="space-y-3 py-4">
                     {needsConfirm ? (

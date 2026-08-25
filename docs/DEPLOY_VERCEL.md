@@ -65,11 +65,14 @@ O arquivo `vercel.json` já define região `gru1` e cron horário em `/api/cron/
 | `ENCRYPTION_MASTER_KEY` | Segredo **novo** |
 | `BILLING_ENABLED` | `false` |
 | `DEMO_MODE` | `false` |
+| `MOCK_SMS_ENABLED` | `true` (SMS de teste na inbox; custo R$ 0) |
 | `CRON_SECRET` | Segredo gerado |
 | `PLATFORM_OWNER_EMAILS` | `mariana@clinica-mariana.local` |
 | `BETA_ALLOWED_EMAILS` | e-mails das 3 profissionais (seed) |
 | `DEMO_BYPASS_EMAILS` | `mariana@clinica-mariana.local` |
 | `RESEND_*` / `VAPID_*` | Opcional no 1º teste; configure para e-mail/push |
+
+Com `MOCK_SMS_ENABLED=true`, cada notificação com telefone também grava na caixa **Configurações → Notificações → SMS de teste** (mesmo se o e-mail enviar).
 
 ---
 

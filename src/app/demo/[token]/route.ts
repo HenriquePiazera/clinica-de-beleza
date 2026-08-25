@@ -8,11 +8,13 @@ import {
 } from '@/lib/demo'
 import { getAppBaseUrlSync } from '@/lib/app-url'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ token: string }> }
+  context: { params: { token: string } }
 ) {
-  const { token } = await context.params
+  const { token } = context.params
   const baseUrl = getAppBaseUrlSync().replace(/\/$/, '')
 
   if (!isDemoMode()) {

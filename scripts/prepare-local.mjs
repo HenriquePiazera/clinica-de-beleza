@@ -112,6 +112,7 @@ function serializeEnv(map) {
     'DEMO_MODE',
     'DEMO_SESSION_HOURS',
     'DEMO_BYPASS_EMAILS',
+    'MOCK_SMS_ENABLED',
     'VAPID_PUBLIC_KEY',
     'VAPID_PRIVATE_KEY',
     'VAPID_SUBJECT',
@@ -205,6 +206,8 @@ export function ensureLocalEnv() {
   map.DEMO_MODE = map.DEMO_MODE || 'false'
   map.DEMO_SESSION_HOURS = map.DEMO_SESSION_HOURS || '2'
   map.DEMO_BYPASS_EMAILS = map.DEMO_BYPASS_EMAILS || OWNER_EMAIL
+  map.MOCK_SMS_ENABLED =
+    map.MOCK_SMS_ENABLED === 'false' ? 'false' : map.MOCK_SMS_ENABLED || 'true'
   map.PLATFORM_OWNER_EMAILS = map.PLATFORM_OWNER_EMAILS || OWNER_EMAIL
   map.BETA_ALLOWED_EMAILS =
     map.BETA_ALLOWED_EMAILS ||

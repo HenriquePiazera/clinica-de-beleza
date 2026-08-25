@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isResendConfigured } from '@/services/email.service'
+import { isMockSmsEnabled } from '@/services/mock-sms.service'
 import { getAppBaseUrlSync } from '@/lib/app-url'
 
 export async function GET() {
@@ -20,6 +21,7 @@ export async function GET() {
     appUrl: getAppBaseUrlSync(),
     resend: isResendConfigured(),
     push: pushConfigured,
+    mockSms: isMockSmsEnabled(),
     timestamp: new Date().toISOString(),
   })
 }

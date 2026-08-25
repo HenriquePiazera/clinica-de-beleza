@@ -3,13 +3,11 @@ import { refreshAndRedirect } from '@/lib/refresh'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   getClientAction,
-  updateClientAction,
   deleteClientAction,
 } from '@/features/clients/actions'
+import { ClientEditForm } from '@/features/clients/client-edit-form'
 import {
   listAttachmentsAction,
   uploadAttachmentAction,
@@ -19,6 +17,8 @@ import { SubmitButton } from '@/components/forms/submit-button'
 import { ResettableForm } from '@/components/forms/resettable-form'
 import { formKeyFromSearchParams } from '@/lib/form-key'
 import { DestructiveActionButton } from '@/components/forms/destructive-action-button'
+import { FormErrorBanner } from '@/components/forms/form-error-banner'
+import { ERROR_CODES } from '@/lib/error-codes'
 
 export default async function ClientDetailPage({
   params,
@@ -32,11 +32,21 @@ export default async function ClientDetailPage({
 
   const attachments = await listAttachmentsAction(params.id)
   const formKey = formKeyFromSearchParams(searchParams)
+  const errorCode = typeof searchParams?.error === 'string' ? searchParams.error : undefined
+  const errorMessage =
+    errorCode && errorCode in ERROR_CODES
+      ? ERROR_CODES[errorCode as keyof typeof ERROR_CODES]
+      : errorCode
+        ? ERROR_CODES.CLIENT_DELETE_FAILED
+        : undefined
 
   async function handleDeleteClient() {
     'use server'
-    await deleteClientAction(params.id)
-    refreshAndRedirect('/clients')
+    const result = await deleteClientAction(params.id)
+    if (result.success) {
+      refreshAndRedirect('/clients')
+    }
+    refreshAndRedirect(`/clients/${params.id}?error=${result.errorCode ?? 'CLIENT_DELETE_FAILED'}`)
   }
 
   return (
@@ -46,67 +56,16 @@ export default async function ClientDetailPage({
         description="Detalhes do cliente"
         backHref="/clients"
       />
+      <FormErrorBanner message={errorMessage} />
       <Card className="mb-6">
-        <CardContent className="pt-6">
-          <ResettableForm
-            formKey={`client-${formKey}`}
-            action={async (formData) => {
-              'use server'
-              const result = await updateClientAction(params.id, formData)
-              if (result.success) {
-                refreshAndRedirect(`/clients/${params.id}`, '/clients')
-              }
-              refreshAndRedirect(`/clients/${params.id}?error=1`, '/clients')
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                name="name"
-                defaultValue={client.name}
-                required
-                className="min-h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                name="phone"
-                defaultValue={client.phone}
-                required
-                className="min-h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                defaultValue={client.email ?? ''}
-                className="min-h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                defaultValue={client.notes ?? ''}
-                rows={3}
-              />
-            </div>
-            <SubmitButton>Atualizar</SubmitButton>
-          </ResettableForm>
+        <CardContent className="space-y-4 pt-6">
+          <ClientEditForm client={client} />
           <DestructiveActionButton
             action={handleDeleteClient}
             buttonLabel="Excluir cliente"
             title="Excluir cliente?"
             description="Todos os agendamentos, registros e arquivos vinculados serão removidos permanentemente."
-            className="mt-4 min-h-11 w-full"
+            className="min-h-11 w-full"
           />
         </CardContent>
       </Card>

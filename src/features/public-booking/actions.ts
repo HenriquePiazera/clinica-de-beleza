@@ -10,6 +10,13 @@ import { resolveServicePhotoUrl } from '@/lib/service-photo'
 import { checkAppointmentConflict } from '@/services/appointment-conflict.service'
 import { isSlotAvailable } from '@/services/availability-slots.service'
 import { sendAppointmentNotification } from '@/services/notification.service'
+import {
+  findClinicClientByPhone,
+} from '@/features/clients/actions'
+import {
+  getAccessibleTeamUserIds,
+  getClinicOwnerId,
+} from '@/lib/team'
 import { z } from 'zod'
 
 const publicBookingSchema = z.object({
@@ -150,7 +157,7 @@ export async function createPublicBooking(input: {
       confirmationToken: string
       confirmUrl: string
       emailSent: boolean
-      notificationChannel: 'push' | 'email' | 'none'
+      notificationChannel: 'push' | 'email' | 'mock_sms' | 'none'
       notificationError?: string
     }
   | { success: false; error: string }
@@ -215,23 +222,20 @@ export async function createPublicBooking(input: {
 
   const email = parsed.data.client_email?.trim() || null
   const phone = parsed.data.client_phone.trim()
+  const clinicOwnerId = await getClinicOwnerId(professional.id)
+  const clinicUserIds = await getAccessibleTeamUserIds(professional.id)
 
-  let client = await prisma.client.findFirst({
-    where: {
-      user_id: professional.id,
-      phone,
-    },
-  })
+  let client = await findClinicClientByPhone(clinicUserIds, phone)
 
   if (!client) {
-    const clientLimit = await checkPlanLimit(professional.id, 'max_clients')
+    const clientLimit = await checkPlanLimit(clinicOwnerId, 'max_clients')
     if (!clientLimit.allowed) {
       return { success: false, error: 'Limite de clientes atingido.' }
     }
 
     client = await prisma.client.create({
       data: {
-        user_id: professional.id,
+        user_id: clinicOwnerId,
         name: parsed.data.client_name.trim(),
         phone,
         email,
@@ -275,6 +279,7 @@ export async function createPublicBooking(input: {
 
   const notification = await sendAppointmentNotification({
     type: 'confirmation',
+    ownerUserId: appointment.user_id,
     appointment: {
       id: appointment.id,
       start_time: appointment.start_time,
@@ -286,6 +291,7 @@ export async function createPublicBooking(input: {
       id: client.id,
       name: client.name,
       email: client.email,
+      phone: client.phone,
       push_subscription: client.push_subscription,
     },
     confirmationToken: token,
@@ -370,8 +376,12 @@ export async function savePushSubscription(input: {
   })
   if (!professional) return { success: false }
 
+  const clinicUserIds = await getAccessibleTeamUserIds(professional.id)
   const client = await prisma.client.findFirst({
-    where: { user_id: professional.id, phone: input.client_phone.trim() },
+    where: {
+      user_id: { in: clinicUserIds },
+      phone: input.client_phone.trim(),
+    },
   })
   if (!client) return { success: false }
 
@@ -404,6 +414,7 @@ export async function savePushSubscription(input: {
     if (appointment) {
       const notification = await sendAppointmentNotification({
         type: 'confirmation',
+        ownerUserId: appointment.user_id,
         appointment: {
           id: appointment.id,
           start_time: appointment.start_time,
@@ -415,6 +426,7 @@ export async function savePushSubscription(input: {
           id: client.id,
           name: client.name,
           email: client.email,
+          phone: client.phone,
           push_subscription: input.subscription,
         },
         confirmationToken: appointment.confirmations[0]?.token,

@@ -22,7 +22,7 @@ import {
   parsePaymentMethodSplits,
   type PaymentMethodSplit,
 } from '@/lib/payment-labels'
-import { getTeamMemberIds } from '@/lib/team'
+import { getAccessibleTeamUserIds } from '@/lib/team'
 
 export type PaymentDTO = {
   id: string
@@ -68,7 +68,7 @@ function toPaymentDTO(p: {
 
 export async function listPaymentsAction(): Promise<PaymentDTO[]> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const payments = await prisma.payment.findMany({
     where: { user_id: { in: userIds } },
     include: { client: { select: { name: true } } },
@@ -108,7 +108,7 @@ export async function createPaymentAction(
 
   if (!parsed.success) return actionError('INVALID_INPUT')
 
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const client = await prisma.client.findFirst({
     where: { id: parsed.data.client_id, user_id: { in: userIds } },
   })
@@ -175,7 +175,7 @@ export async function createPaymentAction(
 
 export async function deletePaymentAction(id: string): Promise<ActionResult> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const existing = await prisma.payment.findFirst({
     where: { id, user_id: { in: userIds } },
   })
@@ -219,7 +219,7 @@ export async function getPaymentReceiptAction(
 ): Promise<ActionResult<PaymentReceiptDTO>> {
   const userId = await requireUserId()
 
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const payment = await prisma.payment.findFirst({
     where: { id: paymentId, user_id: { in: userIds } },
     include: {

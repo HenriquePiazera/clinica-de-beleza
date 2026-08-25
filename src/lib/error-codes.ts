@@ -2,6 +2,10 @@ export const ERROR_CODES = {
   UNAUTHORIZED: 'Sessão expirada. Faça login novamente.',
   FORBIDDEN: 'Você não tem permissão para acessar este recurso.',
   CLIENT_NOT_FOUND: 'Cliente não encontrado.',
+  CLIENT_ALREADY_EXISTS:
+    'Já existe um cliente com este telefone na clínica.',
+  CLIENT_DELETE_FAILED:
+    'Não foi possível excluir o cliente. Tente novamente.',
   APPOINTMENT_NOT_FOUND: 'Agendamento não encontrado.',
   APPOINTMENT_CONFLICT: 'Já existe um agendamento neste horário.',
   APPOINTMENT_BUFFER_CONFLICT:

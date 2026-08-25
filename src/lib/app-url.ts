@@ -6,6 +6,21 @@ function resolveEnvBaseUrl(): string {
   return 'http://localhost:3000'
 }
 
+/** Host local — Outlook/provedores filtram e-mails com link localhost. */
+export function isLocalAppBaseUrl(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname.toLowerCase()
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host.endsWith('.local')
+    )
+  } catch {
+    return true
+  }
+}
+
 export async function getAppBaseUrl(): Promise<string> {
   try {
     const hdrs = await headers()

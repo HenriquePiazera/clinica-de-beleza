@@ -36,7 +36,7 @@ Com login da dona (**Configurações**):
 2. **Serviços** (`/settings/services`) — preços, duração, ativo/inativo  
 3. **Horários** (`/settings/availability`) — cada profissional, na própria conta, define a agenda  
 4. **Página pública** (`/settings/public`) — link e QR de agendamento  
-5. **Notificações** (`/settings/notifications`) — antecedência dos lembretes  
+5. **Notificações** (`/settings/notifications`) — antecedência dos lembretes e caixa de SMS de teste (`/settings/notifications/sms`)  
 6. **Recibos** (`/settings/receipt`) — dados para comprovante  
 
 No agendamento: botão **Copiar lembrete** → colar no WhatsApp.

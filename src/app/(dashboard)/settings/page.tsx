@@ -13,7 +13,7 @@ const onlineSettingsLinks = [
   {
     href: '/settings/notifications',
     label: 'Notificações',
-    description: 'Antecedência do lembrete automático',
+    description: 'Lembretes, confirmação e SMS de teste',
   },
   { href: '/settings/team', label: 'Equipe', description: 'Convidar outros profissionais' },
 ]

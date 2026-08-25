@@ -96,11 +96,7 @@ export function RecordsList({ queue, records }: Props) {
               return (
                 <li key={item.appointment_id}>
                   <Card
-                    className={cn(
-                      appointmentCardClassName(item.status, {
-                        alert: overdue,
-                      })
-                    )}
+                    className={cn(appointmentCardClassName(item.status))}
                   >
                     <CardContent className="space-y-3 py-4">
                       {overdue ? (
