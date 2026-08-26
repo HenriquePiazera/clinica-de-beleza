@@ -96,9 +96,16 @@ export default async function ClientDetailPage({
               {attachments.map((file) => (
                 <li
                   key={file.id}
-                  className="flex min-h-11 items-center justify-between rounded-lg border px-3"
+                  className="flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3"
                 >
-                  <span className="text-sm">{file.file_name}</span>
+                  <a
+                    href={`/api/attachments/${file.id}`}
+                    className="text-sm underline-offset-2 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {file.file_name}
+                  </a>
                   <DestructiveActionButton
                     action={async () => {
                       'use server'

@@ -6,13 +6,13 @@ Ordem sugerida. Detalhes em [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md).
 
 - [ ] Código commitado e push no GitHub `HenriquePiazera/clinica-de-beleza`
 - [ ] `npm run build` passa localmente
-- [ ] Conta Neon + projeto **novo** `clinica-mariana-oliveira`
+- [ ] Conta Neon **ou** Supabase + projeto **novo** `clinica-mariana-oliveira`
 - [ ] `npm run deploy:secrets` → guardar os valores gerados
 
 ## Banco Neon
 
 ```powershell
-$env:DATABASE_URL="postgresql://...neon-pooler...?sslmode=require"
+$env:DATABASE_URL="postgresql://...pooler-ou-direct...?sslmode=require"
 npx prisma db push
 npx tsx scripts/seed-demo.mts
 ```
@@ -25,7 +25,8 @@ npx tsx scripts/seed-demo.mts
 - [ ] Colar variáveis de `.env.production.example` + segredos gerados
 - [ ] `DEMO_MODE=false` e `BILLING_ENABLED=false`
 - [ ] `MOCK_SMS_ENABLED=true` (SMS de teste na inbox)
-- [ ] `DATABASE_URL` = Neon **novo** (não local)
+- [ ] `DATABASE_URL` = Neon/Supabase **novo** (não local)
+- [ ] (Opcional portfólio) Supabase Storage: bucket `clinic-files` + vars na Vercel
 - [ ] Deploy Production
 
 ## Depois do 1º deploy

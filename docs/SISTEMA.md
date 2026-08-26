@@ -230,7 +230,9 @@ src/
 
 ### Anexos
 
-Arquivos em pasta local `storage/` (não Supabase). Em Vercel, upload pode falhar por filesystem efêmero — ver entrega.
+- **Local:** pasta `storage/` (sem vars Supabase).
+- **Produção / portfólio:** Supabase Storage (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + bucket privado `clinic-files`). Ver [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md).
+- Download autenticado: `/api/attachments/[id]`.
 
 ---
 
@@ -282,9 +284,10 @@ E2E cobre login, cliente, agendamento e partes de configurações.
 ## 11. Fora do escopo atual
 
 - WhatsApp API automática
-- Storage em nuvem para anexos
 - App mobile nativo / PWA avançado além do básico
 - Cobrança Stripe / planos SaaS na UI
 - Avaliação pós-atendimento vinculada obrigatoriamente ao agendamento (hoje o `/avaliar` é aberto)
+
+Storage em nuvem: código pronto (Supabase Storage opcional); configuração na Vercel é operação/portfólio.
 
 Ampliações devem ser pedidas à parte (ver garantia em [ENTREGA_CLIENTE.md](./ENTREGA_CLIENTE.md)).

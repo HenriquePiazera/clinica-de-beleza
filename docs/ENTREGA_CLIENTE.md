@@ -24,7 +24,7 @@
 ### Não inclui (agora)
 
 - Integração automática com WhatsApp API (pode ser contratada depois)
-- Storage em nuvem para anexos (upload na Vercel pode falhar)
+- Storage em nuvem como item cobrado à parte (o código já aceita Supabase Storage opcional na Vercel; configurar é operação/portfólio)
 
 ---
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isResendConfigured } from '@/services/email.service'
 import { isMockSmsEnabled } from '@/services/mock-sms.service'
+import { isSupabaseStorageConfigured } from '@/lib/supabase-storage'
 import { getAppBaseUrlSync } from '@/lib/app-url'
 
 export async function GET() {
@@ -22,6 +23,7 @@ export async function GET() {
     resend: isResendConfigured(),
     push: pushConfigured,
     mockSms: isMockSmsEnabled(),
+    supabaseStorage: isSupabaseStorageConfigured(),
     timestamp: new Date().toISOString(),
   })
 }
