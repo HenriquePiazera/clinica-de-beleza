@@ -92,7 +92,8 @@ npx tsx scripts/seed-demo.mts
 4. Env vars (Production) — ver tabela abaixo
 5. **Deploy**
 
-O arquivo `vercel.json` já define região `gru1` e cron horário em `/api/cron/reminders`.
+O arquivo `vercel.json` define região `gru1` e cron diário (`0 12 * * *`) em `/api/cron/reminders`.  
+No plano **Hobby**, a Vercel só aceita cron **1x/dia** — por isso não usamos horário (`0 * * * *`).
 
 ### Variáveis (Production)
 
