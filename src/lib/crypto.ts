@@ -79,3 +79,17 @@ export async function decryptField(
   const dek = decryptDek(user.encrypted_dek)
   return decryptWithKey(cipherText, dek)
 }
+
+/** Evita 500 quando DEK/dados foram criados com outra ENCRYPTION_MASTER_KEY (ex.: seed local → Vercel). */
+export async function safeDecryptField(
+  cipherText: string | null | undefined,
+  userId: string
+): Promise<string | null> {
+  if (!cipherText) return null
+  try {
+    return await decryptField(cipherText, userId)
+  } catch (err) {
+    console.error('[crypto] falha ao descriptografar campo:', err)
+    return null
+  }
+}

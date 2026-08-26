@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { encryptField, decryptField } from '@/lib/crypto'
+import { encryptField, safeDecryptField } from '@/lib/crypto'
 import { logAudit } from '@/lib/audit'
 import { checkPlanLimit } from '@/lib/plan-limits'
 import {
@@ -126,10 +126,10 @@ export async function deleteAttachmentAction(
   })
   if (!attachment) return actionError('INVALID_INPUT')
 
-  const path = await decryptField(attachment.file_url, attachment.user_id)
+  const path = await safeDecryptField(attachment.file_url, attachment.user_id)
 
   try {
-    await deleteFromStorage(path)
+    if (path) await deleteFromStorage(path)
   } catch {
     // Storage pode não estar configurado em dev
   }

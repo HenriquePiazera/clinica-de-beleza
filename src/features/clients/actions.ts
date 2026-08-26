@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { encryptField, decryptField } from '@/lib/crypto'
+import { encryptField, safeDecryptField } from '@/lib/crypto'
 import { logAudit } from '@/lib/audit'
 import { checkPlanLimit } from '@/lib/plan-limits'
 import {
@@ -37,9 +37,7 @@ export async function toClientDTO(client: {
     phone: client.phone,
     email: client.email,
     birth_date: client.birth_date?.toISOString().split('T')[0] ?? null,
-    notes: client.notes
-      ? await decryptField(client.notes, client.user_id)
-      : null,
+    notes: await safeDecryptField(client.notes, client.user_id),
   }
 }
 

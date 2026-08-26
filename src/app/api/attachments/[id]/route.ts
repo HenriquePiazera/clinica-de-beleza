@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { decryptField } from '@/lib/crypto'
+import { safeDecryptField } from '@/lib/crypto'
 import { prisma } from '@/lib/prisma'
 import { getAccessibleTeamUserIds } from '@/lib/team'
 import { getObjectFromStorage } from '@/services/storage.service'
@@ -21,10 +21,13 @@ export async function GET(
     return new Response('Not found', { status: 404 })
   }
 
-  const relativePath = await decryptField(
+  const relativePath = await safeDecryptField(
     attachment.file_url,
     attachment.user_id
   )
+  if (!relativePath) {
+    return new Response('Not found', { status: 404 })
+  }
   const file = await getObjectFromStorage(relativePath)
   if (!file) {
     return new Response('Not found', { status: 404 })

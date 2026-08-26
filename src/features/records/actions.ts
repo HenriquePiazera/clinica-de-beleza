@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { encryptField, decryptField } from '@/lib/crypto'
+import { encryptField, safeDecryptField } from '@/lib/crypto'
 import { logAudit } from '@/lib/audit'
 import {
   actionError,
@@ -41,10 +41,8 @@ export async function getRecordAction(
     appointment_id: record.appointment_id,
     client_id: record.client_id,
     client_name: record.client.name,
-    description: await decryptField(record.description, record.user_id),
-    evolution: record.evolution
-      ? await decryptField(record.evolution, record.user_id)
-      : null,
+    description: (await safeDecryptField(record.description, record.user_id)) ?? '',
+    evolution: await safeDecryptField(record.evolution, record.user_id),
     created_at: record.created_at.toISOString(),
   }
 }
@@ -64,10 +62,8 @@ export async function listRecordsAction(): Promise<ServiceRecordDTO[]> {
       appointment_id: r.appointment_id,
       client_id: r.client_id,
       client_name: r.client.name,
-      description: await decryptField(r.description, r.user_id),
-      evolution: r.evolution
-        ? await decryptField(r.evolution, r.user_id)
-        : null,
+      description: (await safeDecryptField(r.description, r.user_id)) ?? '',
+      evolution: await safeDecryptField(r.evolution, r.user_id),
       created_at: r.created_at.toISOString(),
     }))
   )

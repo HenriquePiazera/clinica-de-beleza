@@ -81,6 +81,7 @@ async function ensureProfessional(seed: ProfessionalSeed, isOwner: boolean) {
       data: {
         name: seed.name,
         password_hash: passwordHash,
+        encrypted_dek: generateEncryptedDek(),
         public_bio: seed.bio,
         public_photo_url: seed.photo_url,
         plan: isOwner ? 'team' : 'professional',
@@ -276,19 +277,26 @@ async function main() {
     }
   }
 
-  const clientsCount = await prisma.client.count({ where: { user_id: owner.id } })
-  if (clientsCount === 0) {
-    const clientsData = [
-      { name: 'Ana Souza', phone: '11999990001', email: 'ana.exemplo@example.com' },
-      { name: 'Bruno Lima', phone: '11999990002', email: 'bruno.exemplo@example.com' },
-      { name: 'Carla Mendes', phone: '11999990003', email: null },
-    ]
+  const clientsData = [
+    { name: 'Ana Souza', phone: '11999990001', email: 'ana.exemplo@example.com' },
+    { name: 'Bruno Lima', phone: '11999990002', email: 'bruno.exemplo@example.com' },
+    { name: 'Carla Mendes', phone: '11999990003', email: null },
+  ]
 
-    for (const c of clientsData) {
-      const notes = await encryptField(
-        'Cliente de exemplo do seed — substituir por dados reais.',
-        owner.id
-      )
+  for (const c of clientsData) {
+    const notes = await encryptField(
+      'Cliente de exemplo do seed — substituir por dados reais.',
+      owner.id
+    )
+    const existingClient = await prisma.client.findFirst({
+      where: { user_id: owner.id, phone: c.phone },
+    })
+    if (existingClient) {
+      await prisma.client.update({
+        where: { id: existingClient.id },
+        data: { name: c.name, email: c.email, notes },
+      })
+    } else {
       await prisma.client.create({
         data: {
           user_id: owner.id,
