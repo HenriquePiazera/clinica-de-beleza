@@ -37,10 +37,19 @@ export default async function LoginPage({
       <CardContent>
         {hasError ? (
           <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            E-mail ou senha incorretos. Conta seed:
-            mariana@clinica-mariana.local / beleza1234
+            E-mail ou senha incorretos. Use o e-mail completo (com
+            @clinica-mariana.local) e senha <strong>beleza1234</strong>.
           </p>
         ) : null}
+        <p className="text-muted-foreground mb-4 text-xs leading-relaxed">
+          Contas de teste (senha: <strong>beleza1234</strong>):
+          <br />
+          mariana@clinica-mariana.local
+          <br />
+          camila@clinica-mariana.local
+          <br />
+          juliana@clinica-mariana.local
+        </p>
         {isDemoMode() && demoStarted ? (
           <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             Link de demonstração ativado. Você tem até {hours}h a partir do

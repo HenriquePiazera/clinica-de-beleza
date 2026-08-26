@@ -75,10 +75,12 @@ async function ensureProfessional(seed: ProfessionalSeed, isOwner: boolean) {
   })
 
   if (existing) {
+    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12)
     return prisma.user.update({
       where: { id: existing.id },
       data: {
         name: seed.name,
+        password_hash: passwordHash,
         public_bio: seed.bio,
         public_photo_url: seed.photo_url,
         plan: isOwner ? 'team' : 'professional',
