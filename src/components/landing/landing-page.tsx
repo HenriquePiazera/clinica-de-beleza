@@ -151,13 +151,23 @@ export function LandingPage({ isLoggedIn = false, clinic }: LandingPageProps) {
                       <p className="mt-1 text-sm text-[#b76e79]">{pro.bio}</p>
                     ) : null}
                     {pro.services.length > 0 ? (
-                      <ul className="mt-4 space-y-2 border-t border-[#f0e4de] pt-4">
+                      <ul className="mt-4 space-y-3 border-t border-[#f0e4de] pt-4">
                         {pro.services.map((service) => (
                           <li
                             key={service.id}
-                            className="flex items-baseline justify-between gap-3 text-sm"
+                            className="flex items-center justify-between gap-3 text-sm"
                           >
-                            <span>{service.name}</span>
+                            <div className="flex min-w-0 items-center gap-3">
+                              {service.photo_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={service.photo_url}
+                                  alt={service.name}
+                                  className="size-10 shrink-0 rounded-md object-cover"
+                                />
+                              ) : null}
+                              <span className="truncate">{service.name}</span>
+                            </div>
                             {formatPrice(service.price) ? (
                               <span className="shrink-0 text-[#7a5a60]">
                                 {formatPrice(service.price)}

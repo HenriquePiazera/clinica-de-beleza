@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getTeamMemberIds } from '@/lib/team'
+import { resolveServicePhotoUrl } from '@/lib/service-photo'
 
 export type LandingService = {
   id: string
@@ -7,6 +8,7 @@ export type LandingService = {
   description: string | null
   duration_minutes: number
   price: number | null
+  photo_url: string | null
 }
 
 export type LandingProfessional = {
@@ -159,6 +161,7 @@ export async function getLandingClinicData(): Promise<LandingClinicData> {
         description: true,
         duration_minutes: true,
         price: true,
+        photo_url: true,
       },
     })
 
@@ -171,6 +174,7 @@ export async function getLandingClinicData(): Promise<LandingClinicData> {
         description: s.description,
         duration_minutes: s.duration_minutes,
         price: s.price ? Number(s.price) : null,
+        photo_url: resolveServicePhotoUrl(s.id, s.photo_url),
       })
       byUser.set(s.user_id, list)
     }
