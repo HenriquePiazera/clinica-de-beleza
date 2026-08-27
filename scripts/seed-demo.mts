@@ -3,6 +3,10 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../src/lib/prisma.ts'
 import { generateEncryptedDek, encryptField } from '../src/lib/crypto.ts'
 import { generatePublicSlug } from '../src/lib/slug.ts'
+import {
+  getAvailableDates,
+  getAvailableSlots,
+} from '../src/services/availability-slots.service.ts'
 
 const OWNER_EMAIL = 'mariana@clinica-mariana.local'
 const DEFAULT_PASSWORD = 'beleza1234'
@@ -57,7 +61,7 @@ const professionals: ProfessionalSeed[] = [
     email: 'juliana@clinica-mariana.local',
     bio: 'Manicure e Pedicure',
     photo_url: '/professionals/juliana-costa.jpg',
-    days: [2, 4],
+    days: [1, 2, 3, 4, 5],
     start: '09:00',
     end: '17:00',
     services: [
@@ -250,16 +254,96 @@ async function seedLandingReviews(ownerId: string) {
   console.log(`${landingReviews.length} depoimentos fictícios publicados na landing.`)
 }
 
+async function seedSampleAppointments(
+  ownerId: string,
+  professionalUsers: { id: string; name: string }[]
+) {
+  const clients = await prisma.client.findMany({
+    where: { user_id: ownerId },
+    orderBy: { created_at: 'asc' },
+    take: 3,
+  })
+  if (clients.length === 0) return
+
+  let created = 0
+
+  for (const [index, professional] of professionalUsers.entries()) {
+    const service = await prisma.service.findFirst({
+      where: { user_id: professional.id, is_active: true },
+      orderBy: { sort_order: 'asc' },
+    })
+    if (!service) continue
+
+    const user = await prisma.user.findFirst({
+      where: { id: professional.id },
+      select: { timezone: true },
+    })
+    const tz = user?.timezone ?? 'America/Sao_Paulo'
+
+    const dates = await getAvailableDates(
+      professional.id,
+      service.duration_minutes,
+      tz,
+      21
+    )
+    if (dates.length === 0) continue
+
+    const dateKey = dates[Math.min(index, dates.length - 1)]
+    const slots = await getAvailableSlots(
+      professional.id,
+      dateKey,
+      service.duration_minutes,
+      tz
+    )
+    if (slots.length === 0) continue
+
+    const slot = slots[Math.min(index * 2, slots.length - 1)]
+    const startTime = new Date(slot.start)
+    const endTime = new Date(slot.end)
+    const client = clients[index % clients.length]
+
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        user_id: professional.id,
+        start_time: startTime,
+        status: { not: 'canceled' },
+      },
+    })
+    if (existing) continue
+
+    await prisma.appointment.create({
+      data: {
+        user_id: professional.id,
+        client_id: client.id,
+        service_id: service.id,
+        start_time: startTime,
+        end_time: endTime,
+        status: 'confirmed',
+      },
+    })
+    created += 1
+  }
+
+  if (created > 0) {
+    console.log(`${created} agendamentos de exemplo criados na agenda.`)
+  }
+}
+
 async function main() {
   const ownerSeed = professionals[0]
   const owner = await ensureProfessional(ownerSeed, true)
   await syncAvailability(owner.id, ownerSeed)
   await syncServices(owner.id, ownerSeed)
 
+  const professionalUsers: { id: string; name: string }[] = [
+    { id: owner.id, name: owner.name },
+  ]
+
   for (const memberSeed of professionals.slice(1)) {
     const member = await ensureProfessional(memberSeed, false)
     await syncAvailability(member.id, memberSeed)
     await syncServices(member.id, memberSeed)
+    professionalUsers.push({ id: member.id, name: member.name })
 
     const existingMembership = await prisma.teamMember.findFirst({
       where: { owner_id: owner.id, member_id: member.id },
@@ -315,6 +399,7 @@ async function main() {
   }
 
   await seedLandingReviews(owner.id)
+  await seedSampleAppointments(owner.id, professionalUsers)
 
   console.log('Profissionais sincronizados:')
   for (const p of professionals) {

@@ -7,7 +7,7 @@ import { getAppBaseUrl } from '@/lib/app-url'
 import { isPastDateTime } from '@/lib/datetime'
 import { generatePublicSlug } from '@/lib/slug'
 import { resolveServicePhotoUrl } from '@/lib/service-photo'
-import { checkAppointmentConflict } from '@/services/appointment-conflict.service'
+import { checkAppointmentConflict, formatConflictMessage } from '@/services/appointment-conflict.service'
 import { isSlotAvailable } from '@/services/availability-slots.service'
 import { sendAppointmentNotification } from '@/services/notification.service'
 import {
@@ -217,7 +217,10 @@ export async function createPublicBooking(input: {
     0
   )
   if (conflict.hasConflict) {
-    return { success: false, error: 'Horário indisponível. Escolha outro.' }
+    return {
+      success: false,
+      error: formatConflictMessage(conflict.type, conflict.conflictingStart),
+    }
   }
 
   const email = parsed.data.client_email?.trim() || null

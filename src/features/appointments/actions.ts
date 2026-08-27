@@ -20,6 +20,7 @@ import {
   checkAppointmentConflict,
   formatConflictMessage,
 } from '@/services/appointment-conflict.service'
+import { isSlotAvailable } from '@/services/availability-slots.service'
 import { buildReminderMessage } from '@/services/reminder.service'
 import { sendAppointmentNotification } from '@/services/notification.service'
 import { getAccessibleTeamUserIds, getTeamMemberIds } from '@/lib/team'
@@ -121,8 +122,27 @@ export async function createAppointmentAction(
     return actionError('INVALID_INPUT')
   }
 
+  const professionalIdRaw = String(
+    formData.get('professional_user_id') ?? ''
+  ).trim()
+  const accessibleIds = await getAccessibleTeamUserIds(userId)
+  const professionalId =
+    professionalIdRaw && accessibleIds.includes(professionalIdRaw)
+      ? professionalIdRaw
+      : userId
+
+  const professional = await prisma.user.findFirst({
+    where: { id: professionalId },
+    select: { timezone: true },
+  })
+  if (!professional) return actionError('INVALID_INPUT')
+
+  const durationMinutes = Math.round(
+    (endTime.getTime() - startTime.getTime()) / (60 * 1000)
+  )
+
   const conflict = await checkAppointmentConflict(
-    userId,
+    professionalId,
     startTime,
     endTime,
     parsed.data.buffer_minutes
@@ -136,9 +156,19 @@ export async function createAppointmentAction(
     }
   }
 
+  const slotAllowed = await isSlotAvailable(
+    professionalId,
+    startTime,
+    durationMinutes,
+    professional.timezone
+  )
+  if (!slotAllowed) {
+    return actionError('APPOINTMENT_CONFLICT')
+  }
+
   const appointment = await prisma.appointment.create({
     data: {
-      user_id: userId,
+      user_id: professionalId,
       client_id: parsed.data.client_id,
       start_time: startTime,
       end_time: endTime,
@@ -273,6 +303,14 @@ export async function updateAppointmentAction(
     existing.end_time.getTime() !== endTime.getTime()
 
   if (timeChanged) {
+    const durationMinutes = Math.round(
+      (endTime.getTime() - startTime.getTime()) / (60 * 1000)
+    )
+    const professional = await prisma.user.findFirst({
+      where: { id: professionalId },
+      select: { timezone: true },
+    })
+
     const conflict = await checkAppointmentConflict(
       professionalId,
       startTime,
@@ -285,6 +323,18 @@ export async function updateAppointmentAction(
         success: false,
         error: formatConflictMessage(conflict.type, conflict.conflictingStart),
         errorCode: conflict.type,
+      }
+    }
+
+    if (professional) {
+      const slotAllowed = await isSlotAvailable(
+        professionalId,
+        startTime,
+        durationMinutes,
+        professional.timezone
+      )
+      if (!slotAllowed) {
+        return actionError('APPOINTMENT_CONFLICT')
       }
     }
   }

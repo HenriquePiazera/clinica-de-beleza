@@ -33,36 +33,87 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [confirmUrl, setConfirmUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [isLoadingDates, setIsLoadingDates] = useState(false)
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false)
+  const [isSubmitting, startSubmitTransition] = useTransition()
   const detailsRef = useRef<HTMLDivElement>(null)
 
   const selectedService = professional.services.find((s) => s.id === serviceId)
 
   useEffect(() => {
-    if (!serviceId) return
-    startTransition(async () => {
-      const availableDates = await fetchPublicDatesAction({
-        slug: selectedSlug,
-        serviceId,
-      })
-      setDates(availableDates)
-      setDate(availableDates[0] ?? '')
-      setSelectedSlot('')
+    if (!serviceId) {
+      setDates([])
+      setDate('')
       setSlots([])
+      setSelectedSlot('')
+      setIsLoadingDates(false)
+      setIsLoadingSlots(false)
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingDates(true)
+    setError(null)
+
+    void fetchPublicDatesAction({
+      slug: selectedSlug,
+      serviceId,
     })
+      .then((availableDates) => {
+        if (cancelled) return
+        setDates(availableDates)
+        setDate(availableDates[0] ?? '')
+        setSelectedSlot('')
+        setSlots([])
+      })
+      .catch(() => {
+        if (cancelled) return
+        setDates([])
+        setDate('')
+        setError('Não foi possível carregar as datas. Tente novamente.')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingDates(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [serviceId, selectedSlug])
 
   useEffect(() => {
-    if (!serviceId || !date) return
-    startTransition(async () => {
-      const availableSlots = await fetchPublicSlotsAction({
-        slug: selectedSlug,
-        serviceId,
-        date,
-      })
-      setSlots(availableSlots)
+    if (!serviceId || !date) {
+      setSlots([])
       setSelectedSlot('')
+      setIsLoadingSlots(false)
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingSlots(true)
+
+    void fetchPublicSlotsAction({
+      slug: selectedSlug,
+      serviceId,
+      date,
     })
+      .then((availableSlots) => {
+        if (cancelled) return
+        setSlots(availableSlots)
+        setSelectedSlot('')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setSlots([])
+        setError('Não foi possível carregar os horários. Tente novamente.')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSlots(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [serviceId, date, selectedSlug])
 
   useEffect(() => {
@@ -73,6 +124,8 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
   function handleSelectService(id: string) {
     setServiceId(id)
     setError(null)
+    setMessage(null)
+    setConfirmUrl(null)
   }
 
   function formatSlotLabel(iso: string) {
@@ -93,12 +146,17 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       return
     }
 
+    if (isLoadingDates || isLoadingSlots) {
+      setError('Aguarde o carregamento dos horários.')
+      return
+    }
+
     if (!selectedSlot) {
       setError('Selecione um horário.')
       return
     }
 
-    startTransition(async () => {
+    startSubmitTransition(async () => {
       const result = await createPublicBooking({
         slug: selectedSlug,
         service_id: serviceId,
@@ -199,6 +257,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
             type="button"
             variant="ghost"
             className="text-muted-foreground hover:text-foreground -ml-2 min-h-11 gap-1.5 px-2"
+            disabled={isSubmitting}
             onClick={() => {
               setServiceId('')
               setDate('')
@@ -206,6 +265,8 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
               setSlots([])
               setSelectedSlot('')
               setError(null)
+              setMessage(null)
+              setConfirmUrl(null)
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
           >
@@ -239,10 +300,13 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
             <select
               id="date"
               value={date}
+              disabled={isLoadingDates || isSubmitting}
               onChange={(e) => setDate(e.target.value)}
-              className="border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm"
+              className="border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm disabled:opacity-60"
             >
-              {dates.length === 0 ? (
+              {isLoadingDates ? (
+                <option value="">Carregando datas...</option>
+              ) : dates.length === 0 ? (
                 <option value="">Sem datas disponíveis</option>
               ) : (
                 dates.map((d) => (
@@ -256,23 +320,28 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
 
           <div className="space-y-2">
             <Label>Horário</Label>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {slots.map((slot) => (
-                <button
-                  key={slot.start}
-                  type="button"
-                  onClick={() => setSelectedSlot(slot.start)}
-                  className={`min-h-11 rounded-md border px-2 text-sm ${
-                    selectedSlot === slot.start
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-input bg-background hover:bg-muted'
-                  }`}
-                >
-                  {formatSlotLabel(slot.start)}
-                </button>
-              ))}
-            </div>
-            {date && slots.length === 0 ? (
+            {isLoadingSlots ? (
+              <p className="text-muted-foreground text-xs">Carregando horários...</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {slots.map((slot) => (
+                  <button
+                    key={slot.start}
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setSelectedSlot(slot.start)}
+                    className={`min-h-11 rounded-md border px-2 text-sm disabled:opacity-60 ${
+                      selectedSlot === slot.start
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-input bg-background hover:bg-muted'
+                    }`}
+                  >
+                    {formatSlotLabel(slot.start)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {date && !isLoadingSlots && slots.length === 0 ? (
               <p className="text-muted-foreground text-xs">
                 Nenhum horário nesta data.
               </p>
@@ -286,6 +355,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              disabled={isSubmitting}
               className="min-h-11"
             />
           </div>
@@ -296,6 +366,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
+              disabled={isSubmitting}
               className="min-h-11"
             />
           </div>
@@ -306,6 +377,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
               className="min-h-11"
             />
             <p className="text-muted-foreground text-xs">
@@ -329,8 +401,12 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
             </div>
           ) : null}
 
-          <Button type="submit" className="min-h-11 w-full" disabled={isPending}>
-            {isPending ? 'Agendando...' : 'Solicitar agendamento'}
+          <Button
+            type="submit"
+            className="min-h-11 w-full"
+            disabled={isSubmitting || isLoadingDates || isLoadingSlots}
+          >
+            {isSubmitting ? 'Agendando...' : 'Solicitar agendamento'}
           </Button>
         </div>
       )}

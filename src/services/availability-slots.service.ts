@@ -31,7 +31,8 @@ export async function getAvailableSlots(
   userId: string,
   dateKey: string,
   durationMinutes: number,
-  timeZone = resolveTimeZone()
+  timeZone = resolveTimeZone(),
+  bufferMinutes = 0
 ): Promise<TimeSlot[]> {
   const tz = resolveTimeZone(timeZone)
   const dayOfWeek = getDayOfWeekInTimeZone(dateKey, tz)
@@ -75,7 +76,7 @@ export async function getAvailableSlots(
         userId,
         startDate,
         endDate,
-        0
+        bufferMinutes
       )
 
       if (!conflict.hasConflict) {
