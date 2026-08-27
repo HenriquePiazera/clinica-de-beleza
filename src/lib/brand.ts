@@ -8,6 +8,13 @@ export const APP_SLOGAN =
 export const APP_PRESENTATION =
   'Um espaço acolhedor para cuidar da sua pele, sobrancelhas e unhas, com atendimento individual e agenda organizada para cada profissional.'
 
+/** Aviso global em portfólio / demonstração. */
+export const FICTITIOUS_DATA_NOTICE =
+  'Todos os dados exibidos neste site são fictícios, apenas para demonstração.'
+
+export const FICTITIOUS_REVIEWS_NOTICE =
+  'Depoimentos fictícios, criados para demonstração do sistema.'
+
 export const APP_LOGO_PATH = '/logo-clinica-mariana-oliveira.png?v=1'
 
 /** Diferenciais exibidos na landing (texto editorial). */

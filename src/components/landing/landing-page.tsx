@@ -9,6 +9,7 @@ import {
   APP_LOGO_PATH,
   APP_DIFFERENTIALS,
   APP_CONTACT,
+  FICTITIOUS_REVIEWS_NOTICE,
 } from '@/lib/brand'
 import type { LandingClinicData } from '@/features/landing/get-landing-data'
 
@@ -214,7 +215,7 @@ export function LandingPage({ isLoggedIn = false, clinic }: LandingPageProps) {
               O que dizem nossas clientes
             </h2>
             <p className="mt-2 text-sm text-[#7a5a60]">
-              Depoimentos reais, publicados com autorização.
+              {FICTITIOUS_REVIEWS_NOTICE}
             </p>
           </div>
 

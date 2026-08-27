@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { APP_NAME, APP_TAGLINE } from '@/lib/brand'
+import { FictitiousDataBanner } from '@/components/layout/fictitious-data-banner'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <FictitiousDataBanner />
         {children}
       </body>
     </html>

@@ -9,7 +9,7 @@ export default async function FeedbackPage() {
     <div>
       <PageHeader
         title="Depoimentos"
-        description="Modere avaliações das clientes e escolha o que aparece na landing"
+        description="Modere depoimentos fictícios de demonstração e escolha o que aparece na landing"
         backHref="/dashboard"
       />
       <ClinicReviewsModeration reviews={reviews} />

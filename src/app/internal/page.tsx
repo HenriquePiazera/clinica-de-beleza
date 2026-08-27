@@ -72,10 +72,6 @@ export default async function CashFlowPage() {
         backHref="/dashboard"
       />
 
-      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-        Demonstração com dados de exemplo. Você pode lançar novas despesas abaixo.
-      </div>
-
       <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Recebíveis (mês)"
