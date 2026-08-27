@@ -37,6 +37,8 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [isSubmitting, startSubmitTransition] = useTransition()
   const detailsRef = useRef<HTMLDivElement>(null)
+  const datesRequestRef = useRef(0)
+  const slotsRequestRef = useRef(0)
 
   const selectedService = professional.services.find((s) => s.id === serviceId)
 
@@ -51,7 +53,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       return
     }
 
-    let cancelled = false
+    const requestId = ++datesRequestRef.current
     setIsLoadingDates(true)
     setError(null)
 
@@ -60,25 +62,23 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       serviceId,
     })
       .then((availableDates) => {
-        if (cancelled) return
+        if (requestId !== datesRequestRef.current) return
         setDates(availableDates)
         setDate(availableDates[0] ?? '')
         setSelectedSlot('')
         setSlots([])
       })
       .catch(() => {
-        if (cancelled) return
+        if (requestId !== datesRequestRef.current) return
         setDates([])
         setDate('')
         setError('Não foi possível carregar as datas. Tente novamente.')
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingDates(false)
+        if (requestId === datesRequestRef.current) {
+          setIsLoadingDates(false)
+        }
       })
-
-    return () => {
-      cancelled = true
-    }
   }, [serviceId, selectedSlug])
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       return
     }
 
-    let cancelled = false
+    const requestId = ++slotsRequestRef.current
     setIsLoadingSlots(true)
 
     void fetchPublicSlotsAction({
@@ -98,22 +98,20 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       date,
     })
       .then((availableSlots) => {
-        if (cancelled) return
+        if (requestId !== slotsRequestRef.current) return
         setSlots(availableSlots)
         setSelectedSlot('')
       })
       .catch(() => {
-        if (cancelled) return
+        if (requestId !== slotsRequestRef.current) return
         setSlots([])
         setError('Não foi possível carregar os horários. Tente novamente.')
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingSlots(false)
+        if (requestId === slotsRequestRef.current) {
+          setIsLoadingSlots(false)
+        }
       })
-
-    return () => {
-      cancelled = true
-    }
   }, [serviceId, date, selectedSlug])
 
   useEffect(() => {

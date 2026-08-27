@@ -9,26 +9,26 @@ type ConflictResult =
       conflictingStart: Date
     }
 
-export async function checkAppointmentConflict(
-  userId: string,
+type AppointmentLike = Pick<
+  Appointment,
+  'id' | 'start_time' | 'end_time' | 'buffer_minutes' | 'status'
+>
+
+export function hasAppointmentConflict(
+  existing: AppointmentLike[],
   startTime: Date,
   endTime: Date,
   bufferMinutes: number,
   excludeAppointmentId?: string
-): Promise<ConflictResult> {
-  const existing = await prisma.appointment.findMany({
-    where: {
-      user_id: userId,
-      status: { not: 'canceled' },
-      ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
-    },
-  })
-
+): ConflictResult {
   const newStart = startTime.getTime()
   const newEnd = endTime.getTime()
   const newEndWithBuffer = newEnd + bufferMinutes * 60 * 1000
 
   for (const appt of existing) {
+    if (excludeAppointmentId && appt.id === excludeAppointmentId) continue
+    if (appt.status === 'canceled') continue
+
     const existingStart = appt.start_time.getTime()
     const existingEnd = appt.end_time.getTime()
     const existingEndWithBuffer =
@@ -58,6 +58,30 @@ export async function checkAppointmentConflict(
   }
 
   return { hasConflict: false }
+}
+
+export async function checkAppointmentConflict(
+  userId: string,
+  startTime: Date,
+  endTime: Date,
+  bufferMinutes: number,
+  excludeAppointmentId?: string
+): Promise<ConflictResult> {
+  const existing = await prisma.appointment.findMany({
+    where: {
+      user_id: userId,
+      status: { not: 'canceled' },
+      ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
+    },
+  })
+
+  return hasAppointmentConflict(
+    existing,
+    startTime,
+    endTime,
+    bufferMinutes,
+    excludeAppointmentId
+  )
 }
 
 export function formatConflictMessage(
