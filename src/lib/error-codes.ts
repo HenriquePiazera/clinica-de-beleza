@@ -21,7 +21,8 @@ export const ERROR_CODES = {
     'Convite registrado. O profissional precisa criar uma conta com este e-mail para ingressar na equipe.',
   INVALID_FILE: 'Tipo de arquivo não permitido.',
   FILE_TOO_LARGE: 'Arquivo excede o limite de 10 MB.',
-  UPLOAD_ERROR: 'Erro ao enviar arquivo. Tente novamente.',
+  UPLOAD_ERROR:
+    'Erro ao enviar arquivo. Em produção, configure Supabase Storage (SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY) ou use uma URL de foto.',
   INVALID_INPUT: 'Dados inválidos. Verifique os campos e tente novamente.',
   DATABASE_ERROR: 'Erro interno. Tente novamente em instantes.',
   INTERNAL_ERROR: 'Erro inesperado. Nossa equipe foi notificada.',

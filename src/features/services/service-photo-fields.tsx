@@ -46,7 +46,8 @@ export function ServicePhotoFields({
           className="border-input bg-background file:bg-muted file:text-foreground min-h-11 w-full rounded-md border px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:px-3 file:py-1"
         />
         <p className="text-muted-foreground text-xs">
-          JPG, PNG ou WebP. Máximo 5 MB. Aparece na página de agendamento.
+          JPG, PNG ou WebP. Máximo 5 MB. Aparece na landing e no agendamento.
+          Em produção o arquivo fica no Supabase Storage (persiste após deploy).
         </p>
       </div>
       <div className="space-y-2">

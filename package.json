@@ -26,7 +26,8 @@
     "test:notifications": "node scripts/test-notifications.mjs",
     "test:crypto": "npx tsx scripts/test-crypto.mts",
     "demo:link": "npx tsx scripts/create-demo-link.mts",
-    "deploy:secrets": "node scripts/print-deploy-secrets.mjs"
+    "deploy:secrets": "node scripts/print-deploy-secrets.mjs",
+    "storage:ensure": "npx tsx scripts/ensure-supabase-storage.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

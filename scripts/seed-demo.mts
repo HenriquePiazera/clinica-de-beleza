@@ -20,7 +20,6 @@ type ProfessionalSeed = {
     duration_minutes: number
     price: number
     sort_order: number
-    photo_url: string
   }[]
 }
 
@@ -34,27 +33,9 @@ const professionals: ProfessionalSeed[] = [
     start: '09:00',
     end: '18:00',
     services: [
-      {
-        name: 'Limpeza de pele',
-        duration_minutes: 60,
-        price: 120,
-        sort_order: 0,
-        photo_url: '/services/limpeza-de-pele.jpg',
-      },
-      {
-        name: 'Drenagem linfática',
-        duration_minutes: 60,
-        price: 150,
-        sort_order: 1,
-        photo_url: '/services/drenagem-linfatica.jpg',
-      },
-      {
-        name: 'Tratamento facial',
-        duration_minutes: 60,
-        price: 180,
-        sort_order: 2,
-        photo_url: '/services/tratamento-facial.jpg',
-      },
+      { name: 'Limpeza de pele', duration_minutes: 60, price: 120, sort_order: 0 },
+      { name: 'Drenagem linfática', duration_minutes: 60, price: 150, sort_order: 1 },
+      { name: 'Tratamento facial', duration_minutes: 60, price: 180, sort_order: 2 },
     ],
   },
   {
@@ -66,27 +47,9 @@ const professionals: ProfessionalSeed[] = [
     start: '10:00',
     end: '19:00',
     services: [
-      {
-        name: 'Design de sobrancelhas',
-        duration_minutes: 40,
-        price: 60,
-        sort_order: 0,
-        photo_url: '/services/design-de-sobrancelhas.jpg',
-      },
-      {
-        name: 'Design com henna',
-        duration_minutes: 50,
-        price: 80,
-        sort_order: 1,
-        photo_url: '/services/design-com-henna.jpg',
-      },
-      {
-        name: 'Brow lamination',
-        duration_minutes: 60,
-        price: 120,
-        sort_order: 2,
-        photo_url: '/services/brow-lamination.jpg',
-      },
+      { name: 'Design de sobrancelhas', duration_minutes: 40, price: 60, sort_order: 0 },
+      { name: 'Design com henna', duration_minutes: 50, price: 80, sort_order: 1 },
+      { name: 'Brow lamination', duration_minutes: 60, price: 120, sort_order: 2 },
     ],
   },
   {
@@ -98,27 +61,9 @@ const professionals: ProfessionalSeed[] = [
     start: '09:00',
     end: '17:00',
     services: [
-      {
-        name: 'Manicure',
-        duration_minutes: 45,
-        price: 45,
-        sort_order: 0,
-        photo_url: '/services/manicure.jpg',
-      },
-      {
-        name: 'Pedicure',
-        duration_minutes: 45,
-        price: 50,
-        sort_order: 1,
-        photo_url: '/services/pedicure.jpg',
-      },
-      {
-        name: 'Manicure + Pedicure',
-        duration_minutes: 90,
-        price: 85,
-        sort_order: 2,
-        photo_url: '/services/manicure-pedicure.jpg',
-      },
+      { name: 'Manicure', duration_minutes: 45, price: 45, sort_order: 0 },
+      { name: 'Pedicure', duration_minutes: 45, price: 50, sort_order: 1 },
+      { name: 'Manicure + Pedicure', duration_minutes: 90, price: 85, sort_order: 2 },
     ],
   },
 ]
@@ -210,15 +155,18 @@ async function syncServices(userId: string, seed: ProfessionalSeed) {
   for (const service of seed.services) {
     const found = await prisma.service.findFirst({
       where: { user_id: userId, name: service.name },
-      select: { id: true },
+      select: { id: true, photo_url: true },
     })
     if (found) {
+      const clearWrongSeedPhoto =
+        !found.photo_url ||
+        found.photo_url.startsWith('/services/')
       await prisma.service.update({
         where: { id: found.id },
         data: {
           duration_minutes: service.duration_minutes,
           price: service.price,
-          photo_url: service.photo_url,
+          ...(clearWrongSeedPhoto ? { photo_url: null } : {}),
           is_active: true,
           sort_order: service.sort_order,
         },
@@ -231,7 +179,7 @@ async function syncServices(userId: string, seed: ProfessionalSeed) {
           description: null,
           duration_minutes: service.duration_minutes,
           price: service.price,
-          photo_url: service.photo_url,
+          photo_url: null,
           is_active: true,
           sort_order: service.sort_order,
         },
