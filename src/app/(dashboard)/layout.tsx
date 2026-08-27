@@ -37,12 +37,19 @@ export default async function DashboardLayout({
         <DemoBanner email={session.user.email} />
         <ShellHeader className="md:hidden" tone="sidebar">
           <Logo href="/dashboard" variant="header" />
-          <DashboardHeaderActions userName={userName} tone="dark" />
+          <DashboardHeaderActions
+            userName={userName}
+            tone="dark"
+            showInternalLink={showInternalLink}
+          />
         </ShellHeader>
 
         <ShellHeader className="hidden md:block">
           <div aria-hidden className="flex-1" />
-          <DashboardHeaderActions userName={userName} />
+          <DashboardHeaderActions
+            userName={userName}
+            showInternalLink={showInternalLink}
+          />
         </ShellHeader>
 
         <div className={BRAND.content}>{children}</div>

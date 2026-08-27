@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { auth } from '@/auth'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { isPlatformOwnerEmail } from '@/lib/platform-owner'
 
 const onlineSettingsLinks = [
   { href: '/settings/public', label: 'Página pública', description: 'Link, QR Code e perfil' },
@@ -47,7 +49,21 @@ function SettingsLinkList({
   )
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const session = await auth()
+  const showInternalLink = isPlatformOwnerEmail(session?.user?.email)
+
+  const financeLinks = showInternalLink
+    ? [
+        {
+          href: '/internal',
+          label: 'Fluxo de caixa',
+          description: 'Receitas, despesas e saldo da clínica',
+        },
+        ...financeSettingsLinks,
+      ]
+    : financeSettingsLinks
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -68,7 +84,7 @@ export default function SettingsPage() {
           <CardTitle className="text-base">Financeiro</CardTitle>
         </CardHeader>
         <CardContent>
-          <SettingsLinkList items={financeSettingsLinks} />
+          <SettingsLinkList items={financeLinks} />
         </CardContent>
       </Card>
     </div>

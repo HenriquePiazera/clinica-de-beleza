@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 type DashboardHeaderActionsProps = {
   userName: string
   tone?: 'light' | 'dark'
+  showInternalLink?: boolean
 }
 
 function linkClass(
@@ -33,10 +34,12 @@ function linkClass(
 export function DashboardHeaderActions({
   userName,
   tone = 'light',
+  showInternalLink = false,
 }: DashboardHeaderActionsProps) {
   const pathname = usePathname()
   const onDark = tone === 'dark'
 
+  const internalActive = pathname.startsWith('/internal')
   const feedbackActive = pathname.startsWith('/feedback')
   const settingsActive = pathname.startsWith('/settings')
   const accountActive = pathname.startsWith('/account')
@@ -51,11 +54,24 @@ export function DashboardHeaderActions({
       >
         {userName}
       </span>
+      {showInternalLink ? (
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className={linkClass(onDark, internalActive)}
+        >
+          <Link href="/internal">Caixa</Link>
+        </Button>
+      ) : null}
       <Button
         asChild
         variant="ghost"
         size="sm"
-        className={linkClass(onDark, feedbackActive)}
+        className={cn(
+          linkClass(onDark, feedbackActive),
+          showInternalLink && 'hidden sm:inline-flex'
+        )}
       >
         <Link href="/feedback">Depoimentos</Link>
       </Button>
