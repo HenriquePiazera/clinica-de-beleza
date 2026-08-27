@@ -109,6 +109,13 @@ export default async function AppointmentDetailPage({
       >
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground text-sm">Profissional</span>
+            <span className="text-sm font-medium">
+              {appointment.professional_name}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground text-sm">Status atual</span>
             <Badge variant={getAppointmentStatusBadgeVariant(appointment.status)}>
               {APPOINTMENT_STATUS_LABELS[appointment.status] ??

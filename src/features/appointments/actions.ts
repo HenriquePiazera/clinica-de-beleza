@@ -23,7 +23,11 @@ import {
 import { isSlotAvailable } from '@/services/availability-slots.service'
 import { buildReminderMessage } from '@/services/reminder.service'
 import { sendAppointmentNotification } from '@/services/notification.service'
-import { getAccessibleTeamUserIds, getTeamMemberIds } from '@/lib/team'
+import {
+  getAccessibleTeamUserIds,
+  getClinicOwnerId,
+  getTeamMemberIds,
+} from '@/lib/team'
 import { randomBytes } from 'crypto'
 
 export type AppointmentDTO = {
@@ -31,6 +35,7 @@ export type AppointmentDTO = {
   client_id: string
   client_name: string
   professional_user_id: string
+  professional_name: string
   start_time: string
   end_time: string
   status: string
@@ -39,10 +44,15 @@ export type AppointmentDTO = {
 }
 
 async function findAccessibleAppointment(id: string, userId: string) {
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   return prisma.appointment.findFirst({
     where: { id, user_id: { in: userIds } },
-    include: { client: { select: { name: true, email: true, push_subscription: true, id: true } } },
+    include: {
+      client: {
+        select: { name: true, email: true, push_subscription: true, id: true },
+      },
+      user: { select: { name: true } },
+    },
   })
 }
 
@@ -59,6 +69,7 @@ export async function getAppointmentAction(
     client_id: appointment.client_id,
     client_name: appointment.client.name,
     professional_user_id: appointment.user_id,
+    professional_name: appointment.user.name,
     start_time: appointment.start_time.toISOString(),
     end_time: appointment.end_time.toISOString(),
     status: appointment.status,
@@ -69,10 +80,13 @@ export async function getAppointmentAction(
 
 export async function listAppointmentsAction(): Promise<AppointmentDTO[]> {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const appointments = await prisma.appointment.findMany({
     where: { user_id: { in: userIds } },
-    include: { client: { select: { name: true } } },
+    include: {
+      client: { select: { name: true } },
+      user: { select: { name: true } },
+    },
     orderBy: { start_time: 'asc' },
   })
 
@@ -81,6 +95,7 @@ export async function listAppointmentsAction(): Promise<AppointmentDTO[]> {
     client_id: a.client_id,
     client_name: a.client.name,
     professional_user_id: a.user_id,
+    professional_name: a.user.name,
     start_time: a.start_time.toISOString(),
     end_time: a.end_time.toISOString(),
     status: a.status,
@@ -122,14 +137,24 @@ export async function createAppointmentAction(
     return actionError('INVALID_INPUT')
   }
 
+  const ownerId = await getClinicOwnerId(userId)
+  const teamIds = await getTeamMemberIds(ownerId)
   const professionalIdRaw = String(
     formData.get('professional_user_id') ?? ''
   ).trim()
-  const accessibleIds = await getAccessibleTeamUserIds(userId)
-  const professionalId =
-    professionalIdRaw && accessibleIds.includes(professionalIdRaw)
-      ? professionalIdRaw
-      : userId
+
+  let professionalId: string
+  if (teamIds.length > 1) {
+    if (!professionalIdRaw || !teamIds.includes(professionalIdRaw)) {
+      return actionError('INVALID_INPUT')
+    }
+    professionalId = professionalIdRaw
+  } else {
+    professionalId =
+      professionalIdRaw && teamIds.includes(professionalIdRaw)
+        ? professionalIdRaw
+        : (teamIds[0] ?? userId)
+  }
 
   const professional = await prisma.user.findFirst({
     where: { id: professionalId },
@@ -466,7 +491,7 @@ export async function listPendingHistoryQueueAction(): Promise<
   PendingQueueItemDTO[]
 > {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const rows = await prisma.appointment.findMany({
     where: {
       user_id: { in: userIds },
@@ -491,7 +516,7 @@ export async function listPendingFinanceQueueAction(): Promise<
   PendingQueueItemDTO[]
 > {
   const userId = await requireUserId()
-  const userIds = await getTeamMemberIds(userId)
+  const userIds = await getAccessibleTeamUserIds(userId)
   const rows = await prisma.appointment.findMany({
     where: {
       user_id: { in: userIds },

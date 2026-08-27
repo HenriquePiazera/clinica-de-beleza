@@ -49,6 +49,10 @@ export type PublicProfessionalDTO = {
     bio: string | null
     photo_url: string | null
   }[]
+  team_owner?: {
+    name: string
+    slug: string
+  }
   setup: {
     services_count: number
     availability_count: number
@@ -107,32 +111,54 @@ export async function getPublicProfessionalBySlug(
   }
 
   if (user.plan === 'team' || !isBillingEnabledCheck()) {
-    const ownerTeams = await prisma.teamMember.findMany({
-      where: { owner_id: user.id, status: 'active' },
-      include: {
-        member: {
-          select: {
-            id: true,
-            name: true,
-            public_slug: true,
-            public_bio: true,
-            public_photo_url: true,
+    const clinicOwnerId = await getClinicOwnerId(user.id)
+    const owner =
+      clinicOwnerId === user.id
+        ? user
+        : await prisma.user.findFirst({
+            where: { id: clinicOwnerId },
+            select: {
+              id: true,
+              name: true,
+              public_slug: true,
+              plan: true,
+            },
+          })
+
+    if (owner && (owner.plan === 'team' || !isBillingEnabledCheck())) {
+      const ownerTeams = await prisma.teamMember.findMany({
+        where: { owner_id: clinicOwnerId, status: 'active' },
+        include: {
+          member: {
+            select: {
+              id: true,
+              name: true,
+              public_slug: true,
+              public_bio: true,
+              public_photo_url: true,
+            },
           },
         },
-      },
-    })
-    const teamMembers = ownerTeams
-      .map((t) => t.member)
-      .filter((m) => m.public_slug)
-      .map((m) => ({
-        id: m.id,
-        name: m.name,
-        slug: m.public_slug!,
-        bio: m.public_bio,
-        photo_url: m.public_photo_url,
-      }))
-    if (teamMembers.length > 0) {
-      dto.team_members = teamMembers
+      })
+      const teamMembers = ownerTeams
+        .map((t) => t.member)
+        .filter((m) => m.public_slug)
+        .map((m) => ({
+          id: m.id,
+          name: m.name,
+          slug: m.public_slug!,
+          bio: m.public_bio,
+          photo_url: m.public_photo_url,
+        }))
+      if (teamMembers.length > 0) {
+        dto.team_members = teamMembers
+        if (clinicOwnerId !== user.id && owner.public_slug) {
+          dto.team_owner = {
+            name: owner.name,
+            slug: owner.public_slug,
+          }
+        }
+      }
     }
   }
 

@@ -51,6 +51,26 @@ export async function canManageTeam(ownerId: string): Promise<boolean> {
   return owner?.plan === 'team'
 }
 
+/** Todos os profissionais ativos da clínica (agenda interna — sem exigir slug público). */
+export async function getTeamMembersForScheduling(ownerId: string) {
+  const owner = await prisma.user.findFirstOrThrow({
+    where: { id: ownerId },
+    select: { id: true, name: true },
+  })
+
+  const members = await prisma.teamMember.findMany({
+    where: { owner_id: ownerId, status: 'active' },
+    include: {
+      member: { select: { id: true, name: true } },
+    },
+  })
+
+  return [
+    { id: owner.id, name: owner.name },
+    ...members.map((m) => ({ id: m.member.id, name: m.member.name })),
+  ]
+}
+
 export async function getTeamProfessionals(ownerId: string) {
   const owner = await prisma.user.findFirstOrThrow({
     where: { id: ownerId },

@@ -46,8 +46,8 @@ export default async function PublicBookingPage({ params }: Props) {
 
         {professional.team_members && professional.team_members.length > 0 ? (
           <PublicProfessionalPicker
-            ownerSlug={professional.slug}
-            ownerName={professional.name}
+            ownerSlug={professional.team_owner?.slug ?? professional.slug}
+            ownerName={professional.team_owner?.name ?? professional.name}
             members={professional.team_members}
           />
         ) : null}

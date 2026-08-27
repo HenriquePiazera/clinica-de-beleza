@@ -23,9 +23,13 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   appointments: AppointmentDTO[]
+  showProfessional?: boolean
 }
 
-export function AppointmentsList({ appointments }: Props) {
+export function AppointmentsList({
+  appointments,
+  showProfessional = false,
+}: Props) {
   const [nameQuery, setNameQuery] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
@@ -96,6 +100,11 @@ export function AppointmentsList({ appointments }: Props) {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="font-medium">{appt.client_name}</p>
+                          {showProfessional ? (
+                            <p className="text-muted-foreground text-sm">
+                              {appt.professional_name}
+                            </p>
+                          ) : null}
                           <p className="text-muted-foreground text-sm">
                             {formatDisplayDateTime(appt.start_time)} —{' '}
                             {new Date(appt.end_time).toLocaleTimeString(
