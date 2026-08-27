@@ -42,32 +42,34 @@ async function login(page: import('@playwright/test').Page) {
 async function main() {
   await mkdir(OUT, { recursive: true })
   const browser = await chromium.launch({ headless: true })
-  const context = await browser.newContext({
+
+  const desktop = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     locale: 'pt-BR',
   })
-  const page = await context.newPage()
+  const page = await desktop.newPage()
 
   // 1) Landing
   await page.goto(`${BASE}/`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await shot(page, '01-landing.png')
 
-  // 2) Agendamento público — profissional / serviço / horário
   const landingHtml = await page.content()
   const slugMatch = landingHtml.match(/href="(\/p\/[^"]+)"/)
   const bookingPath = slugMatch?.[1] ?? '/p/mariana-oliveira-9a2145'
-  await page.goto(`${BASE}${bookingPath}`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(1200)
-  // tenta avançar um passo se o formulário tiver seleção clicável
-  const firstService = page.locator('button, [role="button"], label').filter({
-    hasText: /limpeza|design|manicure|serviço/i,
-  }).first()
-  if (await firstService.count()) {
-    await firstService.click({ timeout: 3000 }).catch(() => undefined)
-    await page.waitForTimeout(500)
-  }
-  await shot(page, '02-agendamento.png')
+
+  // 2) Agendamento — mobile, grade limpa (sem selecionar serviço)
+  const mobile = await browser.newContext({
+    viewport: { width: 430, height: 932 },
+    deviceScaleFactor: 2,
+    locale: 'pt-BR',
+  })
+  const bookingPage = await mobile.newPage()
+  await bookingPage.goto(`${BASE}${bookingPath}`, { waitUntil: 'networkidle' })
+  await bookingPage.getByText('Escolha o serviço').waitFor({ timeout: 15_000 })
+  await bookingPage.waitForTimeout(1000)
+  await shot(bookingPage, '02-agendamento.png')
+  await mobile.close()
 
   // Login para telas internas
   await login(page)
@@ -101,6 +103,7 @@ async function main() {
     await shot(page, '05b-cliente-detalhe.png')
   }
 
+  await desktop.close()
   await browser.close()
   console.log(`Prints salvos em ${OUT}`)
 }
