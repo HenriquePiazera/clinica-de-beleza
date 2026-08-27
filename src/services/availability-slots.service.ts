@@ -1,7 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { hasAppointmentConflict } from '@/services/appointment-conflict.service'
-import {
-  addDaysToDateKey,
+import {  addDaysToDateKey,
   buildZonedDateTime,
   formatDateKeyInTimeZone,
   getDayOfWeekInTimeZone,
@@ -41,6 +39,29 @@ function minutesToTime(totalMinutes: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
 
+function overlapsAnyAppointment(
+  appointments: BusyAppointment[],
+  startTime: Date,
+  endTime: Date,
+  bufferMinutes: number
+): boolean {
+  const newStart = startTime.getTime()
+  const newEndWithBuffer = endTime.getTime() + bufferMinutes * 60 * 1000
+
+  for (const appt of appointments) {
+    if (appt.status === 'canceled') continue
+    const existingStart = appt.start_time.getTime()
+    const existingEndWithBuffer =
+      appt.end_time.getTime() + appt.buffer_minutes * 60 * 1000
+
+    if (newStart < existingEndWithBuffer && newEndWithBuffer > existingStart) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function buildSlotsForDay(
   blocks: AvailabilityBlock[],
   dateKey: string,
@@ -72,14 +93,14 @@ function buildSlotsForDay(
         continue
       }
 
-      const conflict = hasAppointmentConflict(
+      const conflict = overlapsAnyAppointment(
         appointments,
         startDate,
         endDate,
         bufferMinutes
       )
 
-      if (!conflict.hasConflict) {
+      if (!conflict) {
         slots.push({
           start: startDate.toISOString(),
           end: endDate.toISOString(),
@@ -89,6 +110,140 @@ function buildSlotsForDay(
   }
 
   return slots
+}
+
+/** Para listar datas: para no primeiro horário livre do dia (mais rápido). */
+function dayHasAvailableSlot(
+  blocks: AvailabilityBlock[],
+  dateKey: string,
+  durationMinutes: number,
+  timeZone: string,
+  appointments: BusyAppointment[],
+  bufferMinutes: number
+): boolean {
+  const tz = resolveTimeZone(timeZone)
+  const slotStepMinutes = Math.min(durationMinutes, 30)
+
+  for (const block of blocks) {
+    const blockStart = parseTimeToMinutes(block.start_time)
+    const blockEnd = parseTimeToMinutes(block.end_time)
+
+    for (
+      let minute = blockStart;
+      minute + durationMinutes <= blockEnd;
+      minute += slotStepMinutes
+    ) {
+      const startTime = minutesToTime(minute)
+      const endTime = minutesToTime(minute + durationMinutes)
+      const startDate = buildZonedDateTime(dateKey, startTime, tz)
+      const endDate = buildZonedDateTime(dateKey, endTime, tz)
+
+      if (isPastDateTimeInTimeZone(startDate, tz)) continue
+
+      if (
+        !overlapsAnyAppointment(appointments, startDate, endDate, bufferMinutes)
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+async function loadAvailabilityBlocks(userId: string) {
+  return prisma.availability.findMany({
+    where: { user_id: userId, is_active: true },
+    select: {
+      day_of_week: true,
+      start_time: true,
+      end_time: true,
+    },
+    orderBy: [{ day_of_week: 'asc' }, { start_time: 'asc' }],
+  })
+}
+
+function groupBlocksByDay(blocks: AvailabilityBlock[]) {
+  const blocksByDay = new Map<number, AvailabilityBlock[]>()
+  for (const block of blocks) {
+    const list = blocksByDay.get(block.day_of_week) ?? []
+    list.push(block)
+    blocksByDay.set(block.day_of_week, list)
+  }
+  return blocksByDay
+}
+
+export type PublicScheduleResult = {
+  dates: string[]
+  slots: TimeSlot[]
+  selectedDate: string
+}
+
+/** Uma ida ao banco: datas + horários do dia selecionado (ou primeiro dia livre). */
+export async function getPublicSchedule(
+  userId: string,
+  durationMinutes: number,
+  timeZone = resolveTimeZone(),
+  selectedDateKey?: string,
+  daysAhead = 21
+): Promise<PublicScheduleResult> {
+  const tz = resolveTimeZone(timeZone)
+  const blocks = await loadAvailabilityBlocks(userId)
+
+  if (blocks.length === 0) {
+    return { dates: [], slots: [], selectedDate: '' }
+  }
+
+  const blocksByDay = groupBlocksByDay(blocks)
+  let dateKey = getTodayDateKeyInTimeZone(tz)
+  const lastDateKey = addDaysToDateKey(dateKey, daysAhead - 1, tz)
+  const rangeStart = buildZonedDateTime(dateKey, '00:00', tz)
+  const rangeEnd = buildZonedDateTime(lastDateKey, '23:59', tz)
+  const appointments = await loadAppointmentsInRange(userId, rangeStart, rangeEnd)
+
+  const dates: string[] = []
+
+  for (let i = 0; i < daysAhead; i++) {
+    const dayOfWeek = getDayOfWeekInTimeZone(dateKey, tz)
+    const dayBlocks = blocksByDay.get(dayOfWeek)
+
+    if (
+      dayBlocks?.length &&
+      dayHasAvailableSlot(
+        dayBlocks,
+        dateKey,
+        durationMinutes,
+        tz,
+        appointments,
+        0
+      )
+    ) {
+      dates.push(dateKey)
+    }
+
+    dateKey = addDaysToDateKey(dateKey, 1, tz)
+  }
+
+  const resolvedDate =
+    selectedDateKey && dates.includes(selectedDateKey)
+      ? selectedDateKey
+      : dates[0] ?? ''
+
+  if (!resolvedDate) {
+    return { dates, slots: [], selectedDate: '' }
+  }
+
+  const dayBlocks = blocksByDay.get(getDayOfWeekInTimeZone(resolvedDate, tz)) ?? []
+  const slots = buildSlotsForDay(
+    dayBlocks,
+    resolvedDate,
+    durationMinutes,
+    tz,
+    appointments,
+    0
+  )
+
+  return { dates, slots, selectedDate: resolvedDate }
 }
 
 async function loadAppointmentsInRange(
@@ -154,61 +309,16 @@ export async function getAvailableDates(
   userId: string,
   durationMinutes: number,
   timeZone = resolveTimeZone(),
-  daysAhead = 30
+  daysAhead = 21
 ): Promise<string[]> {
-  const tz = resolveTimeZone(timeZone)
-  const blocks = await prisma.availability.findMany({
-    where: { user_id: userId, is_active: true },
-    select: {
-      day_of_week: true,
-      start_time: true,
-      end_time: true,
-    },
-  })
-
-  if (blocks.length === 0) {
-    return []
-  }
-
-  const activeDays = new Set(blocks.map((block) => block.day_of_week))
-  const blocksByDay = new Map<number, AvailabilityBlock[]>()
-
-  for (const block of blocks) {
-    const list = blocksByDay.get(block.day_of_week) ?? []
-    list.push(block)
-    blocksByDay.set(block.day_of_week, list)
-  }
-
-  let dateKey = getTodayDateKeyInTimeZone(tz)
-  const lastDateKey = addDaysToDateKey(dateKey, daysAhead - 1, tz)
-  const rangeStart = buildZonedDateTime(dateKey, '00:00', tz)
-  const rangeEnd = buildZonedDateTime(lastDateKey, '23:59', tz)
-  const appointments = await loadAppointmentsInRange(userId, rangeStart, rangeEnd)
-
-  const dates: string[] = []
-
-  for (let i = 0; i < daysAhead; i++) {
-    const dayOfWeek = getDayOfWeekInTimeZone(dateKey, tz)
-    const dayBlocks = blocksByDay.get(dayOfWeek)
-
-    if (dayBlocks?.length) {
-      const slots = buildSlotsForDay(
-        dayBlocks,
-        dateKey,
-        durationMinutes,
-        tz,
-        appointments,
-        0
-      )
-      if (slots.length > 0) {
-        dates.push(dateKey)
-      }
-    }
-
-    dateKey = addDaysToDateKey(dateKey, 1, tz)
-  }
-
-  return dates
+  const schedule = await getPublicSchedule(
+    userId,
+    durationMinutes,
+    timeZone,
+    undefined,
+    daysAhead
+  )
+  return schedule.dates
 }
 
 export async function isSlotAvailable(

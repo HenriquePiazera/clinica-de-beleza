@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  fetchPublicDatesAction,
+  fetchPublicScheduleAction,
   fetchPublicSlotsAction,
 } from '@/features/public-booking/public-api'
 import { createPublicBooking } from '@/features/public-booking/actions'
@@ -33,12 +33,13 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
   const [message, setMessage] = useState<string | null>(null)
   const [confirmUrl, setConfirmUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isLoadingDates, setIsLoadingDates] = useState(false)
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false)
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [isSubmitting, startSubmitTransition] = useTransition()
   const detailsRef = useRef<HTMLDivElement>(null)
-  const datesRequestRef = useRef(0)
+  const scheduleRequestRef = useRef(0)
   const slotsRequestRef = useRef(0)
+  const skipSlotsFetchForDateRef = useRef<string | null>(null)
 
   const selectedService = professional.services.find((s) => s.id === serviceId)
 
@@ -48,44 +49,55 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       setDate('')
       setSlots([])
       setSelectedSlot('')
-      setIsLoadingDates(false)
+      setIsLoadingSchedule(false)
       setIsLoadingSlots(false)
+      skipSlotsFetchForDateRef.current = null
       return
     }
 
-    const requestId = ++datesRequestRef.current
-    setIsLoadingDates(true)
+    skipSlotsFetchForDateRef.current = null
+    const requestId = ++scheduleRequestRef.current
+    setIsLoadingSchedule(true)
     setError(null)
 
-    void fetchPublicDatesAction({
+    void fetchPublicScheduleAction({
       slug: selectedSlug,
       serviceId,
     })
-      .then((availableDates) => {
-        if (requestId !== datesRequestRef.current) return
-        setDates(availableDates)
-        setDate(availableDates[0] ?? '')
+      .then((schedule) => {
+        if (requestId !== scheduleRequestRef.current) return
+        setDates(schedule.dates)
+        setDate(schedule.selectedDate)
+        setSlots(schedule.slots)
         setSelectedSlot('')
-        setSlots([])
+        skipSlotsFetchForDateRef.current = schedule.selectedDate || null
       })
       .catch(() => {
-        if (requestId !== datesRequestRef.current) return
+        if (requestId !== scheduleRequestRef.current) return
         setDates([])
         setDate('')
-        setError('Não foi possível carregar as datas. Tente novamente.')
+        setSlots([])
+        setError('Não foi possível carregar os horários. Tente novamente.')
       })
       .finally(() => {
-        if (requestId === datesRequestRef.current) {
-          setIsLoadingDates(false)
+        if (requestId === scheduleRequestRef.current) {
+          setIsLoadingSchedule(false)
         }
       })
   }, [serviceId, selectedSlug])
 
   useEffect(() => {
-    if (!serviceId || !date) {
-      setSlots([])
-      setSelectedSlot('')
-      setIsLoadingSlots(false)
+    if (!serviceId || !date || isLoadingSchedule) {
+      if (!date) {
+        setSlots([])
+        setSelectedSlot('')
+        setIsLoadingSlots(false)
+      }
+      return
+    }
+
+    if (skipSlotsFetchForDateRef.current === date) {
+      skipSlotsFetchForDateRef.current = null
       return
     }
 
@@ -144,7 +156,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
       return
     }
 
-    if (isLoadingDates || isLoadingSlots) {
+    if (isLoadingSchedule || isLoadingSlots) {
       setError('Aguarde o carregamento dos horários.')
       return
     }
@@ -298,11 +310,11 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
             <select
               id="date"
               value={date}
-              disabled={isLoadingDates || isSubmitting}
+              disabled={isLoadingSchedule || isSubmitting}
               onChange={(e) => setDate(e.target.value)}
               className="border-input bg-background min-h-11 w-full rounded-md border px-3 text-sm disabled:opacity-60"
             >
-              {isLoadingDates ? (
+              {isLoadingSchedule ? (
                 <option value="">Carregando datas...</option>
               ) : dates.length === 0 ? (
                 <option value="">Sem datas disponíveis</option>
@@ -402,7 +414,7 @@ export function PublicBookingForm({ professional, selectedSlug }: Props) {
           <Button
             type="submit"
             className="min-h-11 w-full"
-            disabled={isSubmitting || isLoadingDates || isLoadingSlots}
+            disabled={isSubmitting || isLoadingSchedule || isLoadingSlots}
           >
             {isSubmitting ? 'Agendando...' : 'Solicitar agendamento'}
           </Button>
